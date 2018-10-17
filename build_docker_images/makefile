@@ -1,20 +1,26 @@
+# make nudome images
+
+# this is a template to create new combinations of linux and mesasdk
 nudomexx : LINUXVERS = 18.04
-nudomexx : IMAGENAME = nugrid/nudome18
+nudomexx : IMAGENAME = nugrid/nudome:xx
 nudomexx : MESAVERS  = 20180822
 nudomexx : nudome
 
+# building the 2018 version
 nudome18 : LINUXVERS = 18.04
-nudome18 : IMAGENAME = nugrid/nudome18
+nudome18 : IMAGENAME = nugrid/nudome:18.0
 nudome18 : MESAVERS  = 20180822
 nudome18 : nudome
 
+# building the 2016 version
 nudome16 : LINUXVERS = 16.04
-nudome16 : IMAGENAME = nugrid/nudome16
+nudome16 : IMAGENAME = nugrid/nudome:16.0
 nudome16 : MESAVERS  = 20160129
 nudome16 : nudome
 
+# building the 2014 version
 nudome14 : LINUXVERS = 12.04
-nudome14 : IMAGENAME = nugrid/nudome14
+nudome14 : IMAGENAME = nugrid/nudome:14.0
 nudome14 : MESAVERS  = 20141212
 nudome14 : nudome
 
