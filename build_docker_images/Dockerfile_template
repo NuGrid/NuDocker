@@ -1,0 +1,27 @@
+# This Dockerfile is part of the ...
+
+FROM ubuntu:mm.nn
+
+MAINTAINER Falk Herwig
+
+COPY apt_packages_nudome.txt /tmp/apt_packages_nudome.txt
+
+RUN apt-get update && \
+    apt-get -y install $(cat /tmp/apt_packages_nudome.txt) && \
+    apt-get autoremove --yes && apt-get clean all && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+	
+RUN useradd -d /home/user -m -c "" user
+RUN chown -R user:user /home/user && \
+    chmod -R 775 /home/user/
+
+USER user
+COPY dot.bash_aliases /home/user/.bash_aliases
+
+RUN (cd /tmp; wget --user-agent=""  http://www.astro.wisc.edu/~townsend/resource/download/mesasdk/mesasdk-x86_64-linux-yyyymmdd.tar.gz) &&\
+    tar xvfz /tmp/mesasdk-x86_64-linux-yyyymmdd.tar.gz -C /home/user
+RUN rm -f /tmp/mesasdk-x86_64-linux-yyyymmdd.tar.gz 
+
+USER user
+ENV HOME /home/user
+WORKDIR /home/user

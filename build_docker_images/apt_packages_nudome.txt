@@ -1,0 +1,16 @@
+binutils
+bzip2
+emacs
+less
+libopenblas-dev
+libx11-dev
+make
+nano
+perl
+subversion
+tcsh
+unzip
+vim
+wget
+zlib1g
+zlib1g-dev
