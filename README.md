@@ -49,7 +49,8 @@ ARG1: name of the container
       Recommend name is the default mesa source tree directory name including
       the mesa version number, such as 'mesa-r9793'.
 ARG2: image name
-      The name is 'nudome:1n.0' where n=4, 6 or 8.
+      The name is 'nugrid/nudome:1n.0' where n=4, 6 or 8. If you have built a 
+      local image the name maybe be different, see `docker images`
 ARG3: full path to the mesa code directory on your host system
       Examples: '/path/to/MESA/mesa-r9793' or '$HOME/MESA/mesa-r9793'
 -m  : optionally provide full path to dir (e.g. for runs) to be mounted in
