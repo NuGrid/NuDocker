@@ -83,6 +83,7 @@ does the same as above, but in addition it mounts `/scratch/data17` in the conta
 * When exiting the container (command line `exit`) it will continue to exist in status _Exited_. 
 * The conatiner can be re-entered with the `login.sh` script: `bin/login.sh container_name`
 * The command `docker rm container_name` permanently ends the container.
+* The command `docker exec -t -i container_name /bin/bash` would create a second login shell into an existing and running container with the name `container_name`.
 
 The `container_name` has been specified during the initial start of the container, and is also the hostname. It is listed in the column `NAMES` of the command `docker ps -a` (see below).
 
