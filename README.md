@@ -28,7 +28,7 @@ In each case the test consisted of compiling and running `test_suite/7M_prems_to
 
 ### Prerequisites
 1. Install Docker on the host OS. Test the installation. Usually that means that receiving some encouraging success message when entering the command `docker run hello-world` at the terminal.
-2. Download a MESA code version `nnnnn` (where `nnnnn` stands for the revision number) as listed on the [MESA News Archive](http://mesa.sourceforge.net/news.html); unzip the ZIP file, e.g. `unzip mesa-r5329.zip` which will expand the mesa source directory `mesa-r5239`.
+2. Download a MESA code version `nnnnn` (where `nnnnn` stands for the revision number) as listed on the [MESA News Archive](http://mesa.sourceforge.net/news.html) or on the [MESA release page on sourceforge](https://sourceforge.net/projects/mesa/files/releases); unzip the ZIP file, e.g. `unzip mesa-r5329.zip` which will expand the mesa source directory `mesa-r5239`.
 
 ### Usage
 In order to use one of the three docker images only the `bin/start_and_login.sh` (and maybe the `bin/login.sh`) is needed. 
@@ -49,7 +49,8 @@ ARG1: name of the container
       Recommend name is the default mesa source tree directory name including
       the mesa version number, such as 'mesa-r9793'.
 ARG2: image name
-      The name is 'nudome:1n.0' where n=4, 6 or 8.
+      The name is 'nugrid/nudome:1n.0' where n=4, 6 or 8. If you have built a 
+      local image the name maybe be different, see `docker images`
 ARG3: full path to the mesa code directory on your host system
       Examples: '/path/to/MESA/mesa-r9793' or '$HOME/MESA/mesa-r9793'
 -m  : optionally provide full path to dir (e.g. for runs) to be mounted in
