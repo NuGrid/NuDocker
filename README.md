@@ -1,4 +1,4 @@
-**This project is still young. Please report any errors, ommissions or suggestions for improvements.**
+**This project is still young. Please report any errors, omissions or suggestions for improvements.**
 
 
 # NuDocker
