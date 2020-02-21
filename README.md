@@ -2,6 +2,8 @@
 
 
 # NuDocker
+## A virtual research environment for computational nuclear and stellar astrophysics
+
 Run older and newer versions of [MESA](http://mesa.sourceforge.net) in Ubuntu-based Docker containers.
 
 See also Evan Bauer's [MESA-Docker repository](https://github.com/evbauer/MESA-Docker) and the [MESA marketplace](http://www.mesastars.org).
