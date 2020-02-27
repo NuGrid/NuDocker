@@ -33,6 +33,23 @@ Version | mesa versions
  
 In each case the test consisted of compiling and running `test_suite/7M_prems_to_AGB`. It is likely that other versions will run as well in containers from these images.
 
+## 7 steps to heaven
+
+The fastest route to success (more details provided below):
+1. Download and install docker
+2. Execute the terminal command `% docker run hello-world`
+3. Download an old mesa version, assuming mesa-r5329 in these instructions
+4. Download this git repo, assuming its on your Desktop in these instructions
+5. Execute the terminal command `% /Users/YOURUSERNAME/Desktop/NuDocker-master/bin/start_and_login.sh mesa-r5329 nugrid/nudome:16.0 /Users/YOURUSERNAME/Desktop/mesa-r5329`
+6. Execute the terminal command to set the number of cores on your system `% export  OMP_NUM_THREADS 12`
+7. Build mesa
+```
+% cd mesa
+% ./install
+```
+
+(Thanks to Frank Timmes for this heavenly input.)
+
 ## User guide
 
 ### Prerequisites
