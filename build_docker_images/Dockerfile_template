@@ -9,6 +9,7 @@ COPY apt_packages_nudome.txt /tmp/apt_packages_nudome.txt
 RUN apt-get update && \
     apt-get -y install $(cat /tmp/apt_packages_nudome.txt) && \
     apt-get autoremove --yes && apt-get clean all && \
+    apt-get install -y --no-install-recommends python3 python3-virtualenv && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 	
 RUN useradd -d /home/user -m -c "" user
