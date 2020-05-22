@@ -1,6 +1,7 @@
 binutils
 bzip2
 emacs
+gfortran
 less
 libopenblas-dev
 libx11-dev
