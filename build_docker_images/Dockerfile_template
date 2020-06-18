@@ -11,20 +11,16 @@ RUN apt-get update && \
     apt-get autoremove --yes && apt-get clean all && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 	
-RUN useradd -d /home/user -m -c "" user
-RUN chown -R user:user /home/user && \
+RUN useradd -d /home/user -m -c "" user && \
+    chown -R user:user /home/user && \
     chmod -R 775 /home/user/
 
 USER user
 COPY dot.bash_aliases /home/user/.bash_aliases
 
-RUN (cd /tmp; wget https://download.open-mpi.org/release/open-mpi/vx.x/openmpi-x.x.x.tar.gz) &&\
-    tar xzvf /tmp/openmpi-x.x.x.tar.gz -C /home/user
-RUN rm -f /tmp/openmpi-x.x.x.tar.gz
-
-RUN (cd /tmp; wget --user-agent=""  http://www.astro.wisc.edu/~townsend/resource/download/mesasdk/old/mesasdk-x86_64-linux-yyyymmdd.tar.gz) &&\
-    tar xvfz /tmp/mesasdk-x86_64-linux-yyyymmdd.tar.gz -C /home/user
-RUN rm -f /tmp/mesasdk-x86_64-linux-yyyymmdd.tar.gz 
+RUN (cd /tmp; wget --user-agent=""  http://www.astro.wisc.edu/~townsend/resource/download/mesasdk/old/mesasdk-x86_64-linux-yyyymmdd.tar.gz) && \
+    tar xvfz /tmp/mesasdk-x86_64-linux-yyyymmdd.tar.gz -C /home/user && \
+    rm -f /tmp/mesasdk-x86_64-linux-yyyymmdd.tar.gz 
 
 USER user
 ENV HOME /home/user
