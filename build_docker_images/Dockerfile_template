@@ -18,6 +18,10 @@ RUN chown -R user:user /home/user && \
 USER user
 COPY dot.bash_aliases /home/user/.bash_aliases
 
+RUN (cd /tmp; wget https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.3.tar.gz) &&\
+    tar xzvf /tmp/openmpi-4.0.3.tar.gz -C /home/user
+RUN rm -f /tmp/openmpi-4.0.3.tar.gz
+
 RUN (cd /tmp; wget --user-agent=""  http://www.astro.wisc.edu/~townsend/resource/download/mesasdk/old/mesasdk-x86_64-linux-yyyymmdd.tar.gz) &&\
     tar xvfz /tmp/mesasdk-x86_64-linux-yyyymmdd.tar.gz -C /home/user
 RUN rm -f /tmp/mesasdk-x86_64-linux-yyyymmdd.tar.gz 
