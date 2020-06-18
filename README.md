@@ -1,8 +1,4 @@
-
-
 [![DOI](https://zenodo.org/badge/151356323.svg)](https://zenodo.org/badge/latestdoi/151356323)
-
-
 
 
 **This project is still young. Please report any errors, omissions or suggestions for improvements.**
@@ -11,7 +7,7 @@
 # NuDocker
 ## A virtual research environment for computational nuclear and stellar astrophysics
 
-Run older and newer versions of [MESA](http://mesa.sourceforge.net) in Ubuntu-based Docker containers.
+This repository hosts a suite for containerizing and running older or newer versions of [MESA](http://mesa.sourceforge.net) in Ubuntu-based Docker containers. The Dockerfile also allows for running and testing of other NuGrid applications, such as NuPPN, in the same docker container.
 
 See also Evan Bauer's [MESA-Docker repository](https://github.com/evbauer/MESA-Docker) and the [MESA marketplace](http://www.mesastars.org).
 
