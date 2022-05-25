@@ -1,0 +1,62 @@
+# This Dockerfile is for the nugrid/nudome:20.1 image
+
+FROM ubuntu:20.04
+
+MAINTAINER Falk Herwig
+
+#COPY apt_packages_nudome.txt /tmp/apt_packages_nudome.txt
+
+RUN apt-get update 
+
+# Some package would ask for geographic information that interrupts 
+# the automatic installation of the package list in apt_packages_nudome.txt.
+# It appears that installing them one at a time with the "-y" option 
+# circumvents this problem
+#
+RUN apt-get -y install binutils
+RUN apt-get -y install bzip2
+RUN apt-get -y install emacs
+RUN apt-get -y install g++
+RUN apt-get -y install gfortran
+RUN apt-get -y install git
+RUN apt-get -y install less
+RUN apt-get -y install libopenblas-dev
+RUN apt-get -y install libopenmpi-dev
+RUN apt-get -y install libx11-dev
+RUN apt-get -y install make
+RUN apt-get -y install nano
+RUN apt-get -y install openmpi-bin
+RUN apt-get -y install openmpi-common
+RUN apt-get -y install openmpi-doc
+RUN apt-get -y install perl
+RUN apt-get -y install python3
+RUN apt-get -y install python3-virtualenv
+RUN apt-get -y install rsync
+RUN apt-get -y install ssh
+RUN apt-get -y install subversion
+RUN apt-get -y install tcsh
+RUN apt-get -y install unzip
+RUN apt-get -y install vim
+RUN apt-get -y install wget
+RUN apt-get -y install zlib1g
+RUN apt-get -y install zlib1g-dev
+
+
+#RUN apt-get -y install $(cat /tmp/apt_packages_nudome.txt) 
+RUN apt-get autoremove --yes && apt-get clean all 
+RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+	
+RUN useradd -d /home/user -m -c "" user && \
+    chown -R user:user /home/user && \
+    chmod -R 775 /home/user/
+
+USER user
+COPY dot.bash_aliases /home/user/.bash_aliases
+
+RUN (cd /tmp; wget --user-agent=""  http://www.astro.wisc.edu/~townsend/resource/download/mesasdk/mesasdk-x86_64-linux-21.4.1.tar.gz) && \
+    tar xvfz /tmp/mesasdk-x86_64-linux-21.4.1.tar.gz -C /home/user && \
+    rm -f /tmp/mesasdk-x86_64-linux-21.4.1.tar.gz 
+
+USER user
+ENV HOME /home/user
+WORKDIR /home/user

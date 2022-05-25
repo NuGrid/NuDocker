@@ -1,9 +1,6 @@
 [![DOI](https://zenodo.org/badge/151356323.svg)](https://zenodo.org/badge/latestdoi/151356323)
 
 
-**This project is still young. Please report any errors, omissions or suggestions for improvements.**
-
-
 # NuDocker
 ## A virtual research environment for computational nuclear and stellar astrophysics
 
@@ -21,12 +18,13 @@ Going back further than 4942 is possible in principle, but we are getting to the
 ## Versions
 There are three versions of the _nudome:yy.v_ image  to run MESA. The major version number yy indicates the year from which the MESA SDK has been taken. The minor version number v may indicates updates or variations. The following mesa versions have been tested in the _nudome_ Docker image:
 
-Version | mesa versions
-------|--------------
-14.0 | r7624, r5329, r6188, r4942
-16.0 | r10398, r10000, r9793, r9575, r8845, r8118
-18.0 | r10398, r10000 
- 
+Version | mesasdk version | mesa versions
+------|--------------|--------------------
+14.0 | | r7624, r6794, r6188, r5329, r4942
+16.0 | | r10398, r10000, r9793, r9575, r8845, r8118
+18.0 | | **12115**, r10398, r10000 
+20.0 / 20.1 | 20.12.1 / 21.4.1  |  **15140**, r22.05.1
+
 In each case the test consisted of compiling and running `test_suite/7M_prems_to_AGB`. It is likely that other versions will run as well in containers from these images.
 
 ## 7 steps to heaven
