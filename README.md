@@ -20,29 +20,28 @@ There are three versions of the _nudome:yy.v_ image  to run MESA. The major vers
 
 Version | mesasdk version | mesa versions
 ------|--------------|--------------------
-14.0 | | r7624, r6794, r6188, r5329, r4942
-16.0 | | r10398, r10000, r9793, r9575, r8845, r8118
-18.0 | | **12115**, r10398, r10000 
-20.0 / 20.1 | 20.12.1 / 21.4.1  |  **15140**, r22.05.1
+14.0 | 20141212 | r7624, r6794, r6188, r5329, r4942
+16.0 | 20160129 | r10398, r10000, r9793, r9575, r8845, r8118
+18.0 | 20180822 | 12115, r10398, r10000 
+20.0 / 20.1 | 20.12.1 / 21.4.1  |  15140, r22.05.1
 
 In each case the test consisted of compiling and running `test_suite/7M_prems_to_AGB`. It is likely that other versions will run as well in containers from these images.
 
-## 7 steps to heaven
+## Quickstart
 
-The fastest route to success (more details provided below):
+Six quick steps to success (more details provided below):
 1. Download and install docker
-2. Execute the terminal command `% docker run hello-world`
-3. Download an old mesa version, assuming mesa-r5329 in these instructions
+2. Execute the terminal command `% docker run hello-world` to check that Docker installation works
+3. Download und unpack an old mesa version, assuming mesa-r5329 in these instructions
 4. Download this git repo, assuming its on your Desktop in these instructions
 5. Execute the terminal command `% /Users/YOURUSERNAME/Desktop/NuDocker-master/bin/start_and_login.sh mesa-r5329 nugrid/nudome:16.0 /Users/YOURUSERNAME/Desktop/mesa-r5329`
-6. Execute the terminal command to set the number of cores on your system `% export  OMP_NUM_THREADS 12`
-7. Build mesa
+6. Build mesa
 ```
 % cd mesa
 % ./install
 ```
 
-(Thanks to Frank Timmes for this heavenly input.)
+(Thanks to Frank Timmes for this input.)
 
 ## User guide
 
@@ -51,7 +50,7 @@ The fastest route to success (more details provided below):
 2. Download a MESA code version `nnnnn` (where `nnnnn` stands for the revision number) as listed on the [MESA News Archive](http://mesa.sourceforge.net/news.html) or on the [MESA release page on sourceforge](https://sourceforge.net/projects/mesa/files/releases); unzip the ZIP file, e.g. `unzip mesa-r5329.zip` which will expand the mesa source directory `mesa-r5239`.
 
 ### Usage
-In order to use one of the three docker images only the `bin/start_and_login.sh` (and maybe the `bin/login.sh`) is needed. 
+In order to use one of the provided docker images only the `bin/start_and_login.sh` (and maybe the `bin/login.sh`) is needed. The required docker images will be automatically downloaded.
 
 #### Starting a container and login
 
@@ -86,7 +85,7 @@ container. Optionally a separate host directory for run directories
 can be mounted with the `-m` option. This will be mounted in the
 container home directory under `$HOME/mnt`.
 
-The environment variable `MESA_DIR` is set inside the container to `$HOME/mesa`.
+The environment variable `MESA_DIR` is set inside the container to `$HOME/mesa`. Depending on your Docker setup and host hardware you may to set `OMP_NUM_THREADS` to the number of cores to use.
 
 ##### Example: 
 ```
