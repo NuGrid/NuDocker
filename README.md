@@ -33,15 +33,16 @@ Six quick steps to success (more details provided below):
 1. Download and install docker
 2. Execute the terminal command `% docker run hello-world` to check that Docker installation works
 3. Download und unpack an old mesa version, assuming mesa-r5329 in these instructions
-4. Download this git repo, assuming its on your Desktop in these instructions
-5. Execute the terminal command `% /Users/YOURUSERNAME/Desktop/NuDocker-master/bin/start_and_login.sh mesa-r5329 nugrid/nudome:16.0 /Users/YOURUSERNAME/Desktop/mesa-r5329`
-6. Build mesa
+4. Download this git repo, assuming its on your Desktop in these instructions, e.g. `git clone https://github.com/NuGrid/NuDocker.git`
+5. Change directory into the NuDocker repo dir, e.g. `cd ~/tmp/NuDocker` (change this command according to where you have cloned the NuDocker repo into). 
+6. Execute the terminal command `% ./bin/start_and_login.sh mesa-r5329 nugrid/nudome:16.0 /Users/YOURUSERNAME/Desktop/mesa-r5329` where you would change the last path name to where **you** have saved the mesa source tree, and where you select the correct version of nudome as specified in table below and where you select as a second argument the name for your docker containter.
+7. Build mesa
 ```
 % cd mesa
 % ./install
 ```
 
-(Thanks to Frank Timmes for this input.)
+
 
 ## User guide
 
