@@ -23,9 +23,20 @@ Version | mesasdk version | mesa versions
 14.0 | 20141212 | r7624, r6794, r6188, r5329, r4942
 16.0 | 20160129 | r10398, r10000, r9793, r9575, r8845, r8118
 18.0 | 20180822 | 12115, r10398, r10000 
+20.031 | 20.12.1  |  15140
+20.0 | 20.12.1  |  15140
 20.0 / 20.1 | 20.12.1 / 21.4.1  |  15140, r22.05.1
 
 In each case the test consisted of compiling and running `test_suite/7M_prems_to_AGB`. It is likely that other versions will run as well in containers from these images.
+
+## Performance
+At some point tests were made to run a recent (`r22.xxx`) version MESA natively on Mac Intel and in NuDocker and it was found that that latter is $5-10\%$ faster. 
+
+Below are a few performance numbers
+
+hardware|native/NuDocker | task | time
+-------|----------------|--------|------
+| | | 8m32.523s
 
 ## Quickstart
 
@@ -119,6 +130,10 @@ examples](https://github.com/NuGrid/wendi-examples): [example
 1](https://github.com/NuGrid/wendi-examples/blob/master/Stellar%20evolution%20and%20nucleosynthesis%20data/Star_explore.ipynb),
 [example2](https://github.com/NuGrid/wendi-examples/blob/master/Stellar%20evolution%20and%20nucleosynthesis%20data/Examples/Teaching_explore_MESA_stellar_evolution.ipynb).
 
+NuDocker has not been tested to work with pgplot. However, it could probably configured to do so. If anyone makes progress in this direction please do a pull request. In Dec 2022 these were some search starting points:
+- https://l10nn.medium.com/running-x11-applications-with-docker-75133178d090
+- https://github.com/mviereck/x11docker
+
 
 ## Docker essentials
 
@@ -159,7 +174,6 @@ make nudome14
 will build the `nudome:14.0` Docker image. The makefile target names of version `16.0` and `18.0` are `nudome16` and `nudome18` respectively. A template target `nudomexx` is provided for new builds with different version combinations and/or other modifications. 
 
 ## Known issues
-
 * Most testing has been done on Mac OSX hosts (OSX 10.13.6, Docker version 18.06.1-ce-mac73).
 * On Linux host system, possibly depending on the setup of your docker installation, you may have to set the permissions on the mounted host directories (including the mesa host dir) to `world`, such as `chmod -R ugo+rwX mesa-rnnnn`.
 * On Linux host system, possibly depending on the setup of your docker installation, files written as the user in the Docker container may have a user and group ID different than the one the user has on the host system.
