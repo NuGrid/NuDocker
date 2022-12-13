@@ -20,19 +20,31 @@ nudome16 : MESAVERS  = 20160129
 nudome16 : nudome
 
 # building the 2014 version
-nudome14 : LINUXVERS = 12.04
-nudome14 : IMAGENAME = nugrid/nudome:14.0
-nudome14 : MESAVERS  = 20141212
+nudome14 : LINUXVERS = 14.04
+nudome14 : IMAGENAME = nugrid/nudome:14.0a
+nudome14 : MESAVERS  = 20140715
+nudome14 : TEMPLATE = Dockerfile_template.14
 nudome14 : nudome
 
-# special versions
-# nugrid/nudome:20.031
+# building 2020 versions
 nudome20.031 : LINUXVERS = 20.04
-nudome20.031 : IMAGENAME = nugrid/nudome:20.031
+nudome20.031 : IMAGENAME = nugrid/nudome:20.031a
 nudome20.031 : MESAVERS  = 20.3.1
+nudome20.031 : TEMPLATE = Dockerfile_template.20
 nudome20.031 : nudome
 
+nudome20.1 : LINUXVERS = 20.04
+nudome20.1 : IMAGENAME = nugrid/nudome:20.1a
+nudome20.1 : MESAVERS  = 21.4.1
+nudome20.1 : TEMPLATE  = Dockerfile_template.20
+nudome20.1 : nudome
+
+
+
+
+
+
 nudome: 
-	sed -e s/mm.nn/$(LINUXVERS)/ -e  s/yyyymmdd/$(MESAVERS)/ -e s/x.x.x/$(MPIVERS)/ -e s/vx.x/v$(MPIV)/ \
-        Dockerfile_template > Dockerfile
+	sed -e s/mm.nn/$(LINUXVERS)/ -e  s/yyyymmdd/$(MESAVERS)/ -e s/x.x.x/$(MPIVERS)/  \
+        $(TEMPLATE) > Dockerfile
 	docker build  -t $(IMAGENAME) .

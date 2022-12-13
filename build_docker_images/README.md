@@ -4,7 +4,7 @@
 File | Comment
 -----|--------
 `Docker_template` | make will use information in targets given in `makefile` and create Dockerfile to use with `docker build`
-`Dockerfile.20` | Dockerfile for `nudome:20` images
+`Docker_template.14` | template for nudome version 14 Dockerfiles
 
 
 ## Instructions
