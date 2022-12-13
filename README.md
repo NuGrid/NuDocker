@@ -18,25 +18,43 @@ Going back further than 4942 is possible in principle, but we are getting to the
 ## Versions
 There are three versions of the _nudome:yy.v_ image  to run MESA. The major version number yy indicates the year from which the MESA SDK has been taken. The minor version number v may indicates updates or variations. The following mesa versions have been tested in the _nudome_ Docker image:
 
-Version | mesasdk version | mesa versions
+NuDome version | MesaSDK version | MESA versions
 ------|--------------|--------------------
 14.0 | 20141212 | r7624, r6794, r6188, r5329, r4942
 16.0 | 20160129 | r10398, r10000, r9793, r9575, r8845, r8118
-18.0 | 20180822 | 12115, r10398, r10000 
-20.031 | 20.12.1  |  15140
-20.0 | 20.12.1  |  15140
-20.0 / 20.1 | 20.12.1 / 21.4.1  |  15140, r22.05.1
+18.0 | 20180822 | r12115, r10398, r10000 
+20.031 | 20.3.1  |  r12778
+20.0 | 20.12.1  |  not used right now
+20.1 | 21.4.1  |  r15140, r22.05.1
 
 In each case the test consisted of compiling and running `test_suite/7M_prems_to_AGB`. It is likely that other versions will run as well in containers from these images.
 
 ## Performance
 At some point tests were made to run a recent (`r22.xxx`) version MESA natively on Mac Intel and in NuDocker and it was found that that latter is $5-10\%$ faster. 
 
-Below are a few performance numbers
+Below are a few additional performance numbers:
 
-hardware|native/NuDocker | task | time
+hardware|native/nudome | task | time
 -------|----------------|--------|------
-| | | 8m32.523s
+Intel Skylake 2GHz in Arbutus virtual workstation | compile after clean | 8m32.523s
+Intel Skylake 2GHz in Arbutus virtual workstation  | `7M_prems_to_AGB$ time ./rn > out&` |13m2.797s
+Apple M2 |   compile after clean | 33m31s
+Apple M2 | `7M_prems_to_AGB$ time ./rn > out&` |1hr59m
+Apple i7 2.3GHz |   compile after clean | 23m30s
+Apple i7 2.3GHz |    `7M_prems_to_AGB$ time ./rn > out&` | 9m44s
+
+
+### Notes:
+* All tests with `OMP_NUM_THREADS=4` which is the default in all `nudome` Docker images
+* Times reported are the `real` output of the `time` command
+* All tests use linux/amd64 image `nugrid/nudome:20.031` and MESA version 12778
+* Arbutus virtual workstation is in the [Arbutus Compute Canada cloud at Univeristy of Victoria](https://docs.alliancecan.ca/wiki/Cloud_resources#Arbutus_cloud).
+
+### Apple Silicon (M1/M2)
+The new Apple machines use the M1/M2 processors dubbed _Apple silicon_. These are Arm-based architectures. Docker will run the nudome `linux/amd64` Docker images on Apple silicon in emulation, but it is slow. Running MESA version 12778 in nugrid/nudome:20.031  on Apple silicon has been tested and it works and gives the same answer `;-)`, see above for some performance numbers. 
+
+Unfortunately there is apparently no straight-forward way to get decent performance with Docker images on Apple silicon. If someone knows how to do this please get in touch. Trying to build a Docker images on Apple silicon using a Dockerfile that have built Intel images using Intel Mesa SDK will not work. In principle, it is possible to build Docker images for multiple platforms, but it gets a bit complicated and it is not clear that the performance will be better, maybe it will. 
+
 
 ## Quickstart
 
@@ -130,7 +148,7 @@ examples](https://github.com/NuGrid/wendi-examples): [example
 1](https://github.com/NuGrid/wendi-examples/blob/master/Stellar%20evolution%20and%20nucleosynthesis%20data/Star_explore.ipynb),
 [example2](https://github.com/NuGrid/wendi-examples/blob/master/Stellar%20evolution%20and%20nucleosynthesis%20data/Examples/Teaching_explore_MESA_stellar_evolution.ipynb).
 
-NuDocker has not been tested to work with pgplot. However, it could probably configured to do so. If anyone makes progress in this direction please do a pull request. In Dec 2022 these were some search starting points:
+NuDocker has not been tested to work with pgplot. However, it could probably be configured to do so. If anyone makes progress in this direction please do a pull request. In Dec 2022 these were some search starting points:
 - https://l10nn.medium.com/running-x11-applications-with-docker-75133178d090
 - https://github.com/mviereck/x11docker
 
