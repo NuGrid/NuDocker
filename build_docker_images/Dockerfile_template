@@ -1,4 +1,5 @@
-# This Dockerfile is part of the ...
+# This is the default Dockerfile template for building various 
+# NuDocker images
 
 FROM ubuntu:mm.nn
 
