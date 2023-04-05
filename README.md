@@ -30,7 +30,7 @@ NuDome version | MesaSDK version | MESA versions
 In each case the test consisted of compiling and running `test_suite/7M_prems_to_AGB`. It is likely that other versions will run as well in containers from these images.
 
 ## Performance
-At some point tests were made to run a recent (`r22.xxx`) version MESA natively on Mac Intel and in NuDocker and it was found that that latter is $5-10\%$ faster. 
+At some point tests were made to run a recent (`r22.xxx`) version MESA natively on Mac Intel and in NuDocker and it was found that that latter is 5-10 % faster. 
 
 Below are a few additional performance numbers:
 
