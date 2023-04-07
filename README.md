@@ -1,7 +1,10 @@
-**This project is still young. Please report any errors, ommissions or suggestions for improvements.**
+[![DOI](https://zenodo.org/badge/151356323.svg)](https://zenodo.org/badge/latestdoi/151356323)
+
 
 # NuDocker
-Run older and newer versions of [MESA](http://mesa.sourceforge.net) in Ubuntu-based Docker containers.
+## A virtual research environment for computational nuclear and stellar astrophysics
+
+This repository hosts a suite for containerizing and running older or newer versions of [MESA](http://mesa.sourceforge.net) in Ubuntu-based Docker containers. The Dockerfile also allows for running and testing of other NuGrid applications, such as NuPPN, in the same docker container.
 
 See also Evan Bauer's [MESA-Docker repository](https://github.com/evbauer/MESA-Docker) and the [MESA marketplace](http://www.mesastars.org).
 
@@ -13,76 +16,151 @@ The docker technology provides _containers_ in which a particular version of MES
 Going back further than 4942 is possible in principle, but we are getting to the time before MESA SDK, and maybe even when the intel fortran compiler was the prefered option. For the time being this project does not support earlier versions. However, using the provided Dockerfiles is a good starting point for the ambitious MESA engineer to push back further into the history of MESA revisions.  Any success in that direction should trigger a pull request in this repo. 
 
 ## Versions
-There are three images to run MESA: _nudome14_, _nudome16_ and _nudome18_. The number NN in the name _nudomeNN_ indicates the year from which the MESA SDK has been taken. The following mesa versions have been tested in these Docker images:
+There are three versions of the _nudome:yy.v_ image  to run MESA. The major version number yy indicates the year from which the MESA SDK has been taken. The minor version number v may indicates updates or variations. The following mesa versions have been tested in the _nudome_ Docker image:
 
-Image | mesa versions
-------|--------------
-nudome14 | r7624, r6188, r4942
-nudome16 | r10398, r10000, r9793, r9575, r8845, r8118
-nudome18 | r10398, r10000 
- 
+NuDome version | MesaSDK version | MESA versions
+------|--------------|--------------------
+14.0 | 20141212 | r7624, r6794, r6188, r5329, r4942
+16.0 | 20160129 | r10398, r10000, r9793, r9575, r8845, r8118
+18.0 | 20180822 | r12115, r10398, r10000 
+20.031 | 20.3.1  |  r12778
+20.0 | 20.12.1  |  not used right now
+20.1 | 21.4.1  |  r15140, r22.05.1
+
 In each case the test consisted of compiling and running `test_suite/7M_prems_to_AGB`. It is likely that other versions will run as well in containers from these images.
+
+## Performance
+At some point tests were made to run a recent (`r22.xxx`) version MESA natively on Mac Intel and in NuDocker and it was found that that latter is 5-10 % faster. 
+
+Below are a few additional performance numbers:
+
+hardware|native/nudome | task | time
+-------|----------------|--------|------
+Intel Skylake 2GHz in Arbutus virtual workstation | compile after clean | 8m32.523s
+Intel Skylake 2GHz in Arbutus virtual workstation  | `7M_prems_to_AGB$ time ./rn > out&` |13m2.797s
+Apple M2 |   compile after clean | 33m31s
+Apple M2 | `7M_prems_to_AGB$ time ./rn > out&` |1hr59m
+Apple i7 2.3GHz |   compile after clean | 23m30s
+Apple i7 2.3GHz |    `7M_prems_to_AGB$ time ./rn > out&` | 9m44s
+
+
+### Notes:
+* All tests with `OMP_NUM_THREADS=4` which is the default in all `nudome` Docker images
+* Times reported are the `real` output of the `time` command
+* All tests use linux/amd64 image `nugrid/nudome:20.031` and MESA version 12778
+* Arbutus virtual workstation is in the [Arbutus Compute Canada cloud at Univeristy of Victoria](https://docs.alliancecan.ca/wiki/Cloud_resources#Arbutus_cloud).
+
+### Apple Silicon (M1/M2)
+The new Apple machines use the M1/M2 processors dubbed _Apple silicon_. These are Arm-based architectures. Docker will run the nudome `linux/amd64` Docker images on Apple silicon in emulation, but it is slow. Running MESA version 12778 in nugrid/nudome:20.031  on Apple silicon has been tested and it works and gives the same answer `;-)`, see above for some performance numbers. 
+
+Unfortunately there is apparently no straight-forward way to get decent performance with Docker images on Apple silicon. If someone knows how to do this please get in touch. Trying to build a Docker images on Apple silicon using a Dockerfile that have built Intel images using Intel Mesa SDK will not work. In principle, it is possible to build Docker images for multiple platforms, but it gets a bit complicated and it is not clear that the performance will be better, maybe it will. 
+
+
+## Quickstart
+
+Six quick steps to success (more details provided below):
+1. Download and install docker
+2. Execute the terminal command `% docker run hello-world` to check that Docker installation works
+3. Download und unpack an old mesa version, assuming mesa-r5329 in these instructions
+4. Download this git repo, assuming its on your Desktop in these instructions, e.g. `git clone https://github.com/NuGrid/NuDocker.git`
+5. Change directory into the NuDocker repo dir, e.g. `cd ~/tmp/NuDocker` (change this command according to where you have cloned the NuDocker repo into). 
+6. Execute the terminal command `% ./bin/start_and_login.sh mesa-r5329 nugrid/nudome:16.0 /Users/YOURUSERNAME/Desktop/mesa-r5329` where you would change the last path name to where **you** have saved the mesa source tree **in step 3 above**, and where you select the correct version of nudome as specified in table below and where you select as a second argument the name for your docker containter.
+7. Build mesa
+```
+% cd mesa
+% ./install
+```
+
+
 
 ## User guide
 
 ### Prerequisites
-1. Install Docker on your host OS. Test your installation. Usually that means that you receive some encouraging success message when entering the command `docker run hello-world` at the terminal.
-2. Download a MESA code version `nnnnn` (where `nnnnn` stands for the revision number) as listed on the [MESA News Archive](http://mesa.sourceforge.net/news.html); unzip the ZIP file. For the instructions below it assumed (but not required) that the MESA code tree is extracted into a directory called `mesa-rnnnnn`.
+1. Install Docker on the host OS. Test the installation. Usually that means that receiving some encouraging success message when entering the command `docker run hello-world` at the terminal.
+2. Download a MESA code version `nnnnn` (where `nnnnn` stands for the revision number) as listed on the [MESA News Archive](http://mesa.sourceforge.net/news.html) or on the [MESA release page on sourceforge](https://sourceforge.net/projects/mesa/files/releases); unzip the ZIP file, e.g. `unzip mesa-r5329.zip` which will expand the mesa source directory `mesa-r5239`.
 
 ### Usage
-In order to use one of the three docker images only the `bin/start_and_login.sh` (and maybe the `bin/login.sh`) is needed. 
+In order to use one of the provided docker images only the `bin/start_and_login.sh` (and maybe the `bin/login.sh`) is needed. The required docker images will be automatically downloaded.
 
 #### Starting a container and login
-You can place the scripts in the `bin` directory in your own `$HOME/bin` directory, or add the path to this bin directory in your repository to your `$PATH` environment variable, or just directly specify the script with a relative or absolute path. If you are in the root directory of the _NuDOcker_ repository you start a container and login with the `bin/start_and_login.sh` script:
+
+The scripts in the `bin` directory can be placed in the user's
+`$HOME/bin` directory, or the path to this bin directory is added to
+the `$PATH` environment variable, or the the script is directly called with 
+the relative or absolute path. From the top-level directory of
+the _NuDocker_ repository the container can be started and logged-in with the
+`bin/start_and_login.sh` script:
 
 ```
 Usage: start_and_login.sh [-m /host/dir/to/mnt/for/runs] ARG1 ARG2 ARG3
 
 ARG1: name of the container 
-      Recommend to include the mesa version number, such as 'mesa-r9793'.
-ARG2: image name ID
-      There are three options: nudome14, nudome16 or nudome18.
+      Recommend name is the default mesa source tree directory name including
+      the mesa version number, such as 'mesa-r9793'.
+ARG2: image name
+      The name is 'nugrid/nudome:1n.0' where n=4, 6 or 8. If you have built a 
+      local image the name maybe be different, see `docker images`
 ARG3: full path to the mesa code directory on your host system
       Examples: '/path/to/MESA/mesa-r9793' or '$HOME/MESA/mesa-r9793'
 -m  : optionally provide full path to dir (e.g. for runs) to be mounted in
       '$HOME/mnt'
 ```
 
-There are two different use cases:
-1. The default is to just mount the full path to the mesa code directory (ARG3) into the container where it appears as `$HOME/mesa`, i.e. the dir `mesa` in the user home dir inside the container. A user could use the home dir inside the container for actual runs, but this storage is not accessible from the host. Instead the typical use of this mode is to run in 
-	- the `star/test_suite` dir, or
-	- to create a mesa run dir inside the mesa home dir (on the container) which is on the host the mesa source direcory tree that was specified during mount time, such as `user@mesa-r9575:~/mesa$ mkdir mesa_runs`, and then create there your mesa run directory, e.g. by copy from the `star/test_suite` directory.
-2. The second usage scenario is to use the `-m` option to specify a second directory on the host system, e.g. on an external hard drive or scratch space. This will be mounted in the container home directory under `$HOME/mnt`, and run directories can be created there. 
+The default usage scenario is to run either a test_suite case inside
+the mesa source tree, or to create a run directory at top level of the
+mesa source tree. For this, the default would mount the source code
+directory (`ARG3`) into the container where it appears as `$HOME/mesa`,
+i.e. the dir `mesa` in the user home dir inside the
+container. Optionally a separate host directory for run directories
+can be mounted with the `-m` option. This will be mounted in the
+container home directory under `$HOME/mnt`.
 
-In both cases the environment variable `MESA_DIR` is set inside the container to `$HOME/mesa`.
+The environment variable `MESA_DIR` is set inside the container to `$HOME/mesa`. Depending on your Docker setup and host hardware you may to set `OMP_NUM_THREADS` to the number of cores to use.
 
-	
-	
 ##### Example: 
 ```
-bin/start_and_login.sh mesa-r9331 nugrid/nudome16 /Volumes/Astro/L/CODE/MESA/mesa-r9575
+bin/start_and_login.sh mesa-r9575 nugrid/nudome:16.0 /Volumes/Astro/L/CODE/MESA/mesa-r9575
 ```
-starts a container of the image nugrid/nudome16 and mounts the host directory `/Volumes/Astro/L/CODE/MESA/mesa-r9575` which contains the mesa source directory of version 9575. The assigned container name is `mesa-r9331`. 
+starts a container of the image nugrid/nudome:16.0 and mounts the host directory `/Volumes/Astro/L/CODE/MESA/mesa-r9575` which contains the mesa source directory of version 9575. The assigned container name is `mesa-r9575`. 
 
 ```
-bin/start_and_login.sh -m /scratch/data17 mesa-r9331 nugrid/nudome16 /Volumes/Astro/L/CODE/MESA/mesa-r9575
+bin/start_and_login.sh -m /scratch/data17 mesa-r9575 nugrid/nudome:16.0 /Volumes/Astro/L/CODE/MESA/mesa-r9575
 ```
-does the same as above, but in addition it mounts `/scratch/data17` in the container home directory under `$HOME/mnt` where it can be used to run the MESA code. 
+does the same as above, but in addition it mounts `/scratch/data17` in the container home directory under `$HOME/mnt` where mesa run directories can be placed. 
 
 #### Exit, login again or kill the docker container
 
-* When you exit the container (command line `exit`) you will leave the container, which will continue to exist in status _Exited_. 
-* To re-enter the container use the `login.sh` script: `bin/login.sh container_name`
-* To permanently end the container _remove_ it with command line `docker rm container_name`. 
+* When exiting the container (command line `exit`) it will continue to exist in status _Exited_. 
+* The conatiner can be re-entered with the `login.sh` script: `bin/login.sh container_name`
+* The command `docker rm container_name` permanently ends the container.
+* The command `docker exec -t -i container_name /bin/bash` would create a second login shell into an existing and running container with the name `container_name`.
 
 The `container_name` has been specified during the initial start of the container, and is also the hostname. It is listed in the column `NAMES` of the command `docker ps -a` (see below).
 
-## Visualization of results
-At this point the nudome images do not provide any tools that may be used for plotting. This would be done on the host system through the many available tools available e.g. from the [MESA marketplace](http://mesastar.org). One such tool is [NuGrid's NuGridPy](https://nugrid.github.io/NuGridPy) that can be easily installed via the [NuGridPy pip package](https://pypi.org/project/NuGridpy), see also [usage examples](https://github.com/NuGrid/wendi-examples): [example 1](https://github.com/NuGrid/wendi-examples/blob/master/Stellar%20evolution%20and%20nucleosynthesis%20data/Star_explore.ipynb), [example2](https://github.com/NuGrid/wendi-examples/blob/master/Stellar%20evolution%20and%20nucleosynthesis%20data/Examples/Teaching_explore_MESA_stellar_evolution.ipynb). 
+## Visualization of results 
+
+At this point the nudome image does not provide any tools that may be used for plotting. This would be done on the host system through the many available tools available e.g. from
+the [MESA marketplace](http://mesastar.org). One such tool is
+[NuGrid's NuGridPy](https://nugrid.github.io/NuGridPy) that can be
+easily installed via the [NuGridPy pip
+package](https://pypi.org/project/NuGridpy), see also [usage
+examples](https://github.com/NuGrid/wendi-examples): [example
+1](https://github.com/NuGrid/wendi-examples/blob/master/Stellar%20evolution%20and%20nucleosynthesis%20data/Star_explore.ipynb),
+[example2](https://github.com/NuGrid/wendi-examples/blob/master/Stellar%20evolution%20and%20nucleosynthesis%20data/Examples/Teaching_explore_MESA_stellar_evolution.ipynb).
+
+NuDocker has not been tested to work with pgplot. However, it could probably be configured to do so. If anyone makes progress in this direction please do a pull request. In Dec 2022 these were some search starting points:
+- https://l10nn.medium.com/running-x11-applications-with-docker-75133178d090
+- https://github.com/mviereck/x11docker
 
 
 ## Docker essentials
-Docker containers are actually doing things, and they are launched by activating a Docker image. We have three Docker images, _nomedo14_, _nomedo16_ and _nomedo18_. You can launch as many containers of each of these images as you like. The containers are into what you log in and where you actually run MESA.
+
+Docker containers are actually doing things, and they are launched by
+activating a Docker image. Containers are instances of images. The
+_nudome_ image comes in three versions. You can launch as many
+containers of each of these image versions as you like, just give them
+different names. The containers are what you login to and where you
+actually run MESA.
 
 These are the only docker commands you may need:
 
@@ -93,16 +171,31 @@ Docker command | explanation
 
 
 ## Building the docker images
-If you want to try different combinations of Ubuntu, MESA-SDK versions, or would like to add additional software to the nudome images build your own Docker image. In the `build_docker_images` directory use the `make` command to build either of the targets `nudome14`, `nudome16` or `nudome18`. Edit the `makefile` to specify version numbers for the template target `nudomexx`. 
 
-The `make` command will replace insert the version numbers into the `Dockerfile` based on the `Dockerfile_template`. Any additional packages you may want to install using Ubuntu's package manager `apt-get` may just be added to the `apt_packages_nudome.txt` file.
+If you want to try different combinations of Ubuntu and MESA SDK
+versions, or would like to add additional software to the nudome
+image build your own Docker image. In the `build_docker_images`
+directory use the `make` command to build the three _nudome_
+versions. Edit the `makefile` to specify version numbers for the
+template target `nudomexx`.
+
+The `make` command will insert the MESA SDK and Ubuntu version numbers into the
+`Dockerfile` based on the `Dockerfile_template`. Any additional
+packages you may want to install using Ubuntu's package manager
+`apt-get` may just be added to the `apt_packages_nudome.txt` file.
 
 ##### Example:
+
 ```
 make nudome14
 ```
-will build the `nudome14` Docker image.
+will build the `nudome:14.0` Docker image. The makefile target names of version `16.0` and `18.0` are `nudome16` and `nudome18` respectively. A template target `nudomexx` is provided for new builds with different version combinations and/or other modifications. 
+
+## Known issues
+* Most testing has been done on Mac OSX hosts (OSX 10.13.6, Docker version 18.06.1-ce-mac73).
+* On Linux host system, possibly depending on the setup of your docker installation, you may have to set the permissions on the mounted host directories (including the mesa host dir) to `world`, such as `chmod -R ugo+rwX mesa-rnnnn`.
+* On Linux host system, possibly depending on the setup of your docker installation, files written as the user in the Docker container may have a user and group ID different than the one the user has on the host system.
 
 ## Roadmap
-* add capability to run PPN
-* add jupyter notebook server that can be accessed from host to integrate analysis tools in the form of notebooks
+* Add capability to run PPN.
+* Add jupyter notebook server that can be accessed from host to integrate analysis tools in the form of notebooks.
