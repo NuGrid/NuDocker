@@ -25,7 +25,7 @@ NuDome version | MesaSDK version | MESA versions
 18.0 | 20180822 | r12115, r10398, r10000 
 20.031 | 20.3.1  |  r12778
 20.0 | 20.12.1  |  not used right now
-20.1 | 21.4.1  |  r15140, r22.05.1
+20.1 | 21.4.1  |  r15140, r22.05.1, r22.11.1
 
 In each case the test consisted of compiling and running `test_suite/7M_prems_to_AGB`. It is likely that other versions will run as well in containers from these images.
 
