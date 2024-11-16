@@ -21,18 +21,22 @@ then
     exit
 fi	
 
+EMNT=""
+
 while getopts "m:h" opt; do
     case $opt in
-	m)
-	    EMNT=$OPTARG
-	    echo "external mount:" $EMNT >&2
-	    ;;
-	h)
-	    usage
-	    ;;
-	\?)
-	    echo "Invalid option: -$OPTARG" >&2
-	    ;;
+        m)
+            EMNT=$OPTARG
+            echo "external mount:" $EMNT >&2
+            ;;
+        h)
+            usage
+            exit
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            exit 1
+            ;;
     esac
 done
 
@@ -42,10 +46,13 @@ if [ "$#" -ne 3 ]; then
     usage
     exit
 else
-    docker  run  -h $1 --name $1 \
-	    -v $3:/home/user/mesa \
-	    -v $EMNT:/home/user/mnt \
-	    -t -i  $2 /bin/bash
+    docker_cmd="docker run -h $1 --name $1 -v $3:/home/user/mesa"
+    
+    # Add the external mount option if -m was provided
+    if [ -n "$EMNT" ]; then
+        docker_cmd="$docker_cmd -v $EMNT:/home/user/mnt"
+    fi
+    
+    docker_cmd="$docker_cmd -t -i $2 /bin/bash"
+    eval $docker_cmd
 fi
-
-
