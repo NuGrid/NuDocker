@@ -193,9 +193,9 @@ will build the `nudome:14.0` Docker image. The makefile target names of version 
 
 ## Known issues
 * Most testing has been done on Mac OSX hosts (OSX 10.13.6, Docker version 18.06.1-ce-mac73).
-* On Linux host system, possibly depending on the setup of your docker installation, you may have to set the permissions on the mounted host directories (including the mesa host dir) to `world`, such as `chmod -R ugo+rwX mesa-rnnnn`. Alternatively you have to add the user using this to the docker group, see [here](https://docs.docker.com/engine/install/linux-postinstall/), for example  `sudo usermod -aG docker username` and then log out and back in.
+* On Linux host system, possibly depending on the setup of your docker installation, you may have to set the permissions on the mounted host directories (including the mesa host dir) to `world`, such as `chmod -R ugo+rwX mesa-rnnnn`. 
 * On Linux host system, possibly depending on the setup of your docker installation, files written as the user in the Docker container may have a user and group ID different than the one the user has on the host system. 
-    - This has now been fixed in the start_and_login.sh script. The user inside the docker container is now set to the same user (but not group) ID as the user on the host system.
+
 
 ## Roadmap
 * Add capability to run PPN.
