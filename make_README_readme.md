@@ -1,0 +1,1 @@
+Edit `README_src.md` and add use `python bin/generate_readme.py` to generate the README.md file with index and header links.
