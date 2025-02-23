@@ -26,8 +26,7 @@ echo "same path inside the container."
 # Launch container: bind MESA_SRC to CONTAINER_MESA_DIR,
 # set container environment variables, source MESASDK, and cd to CONTAINER_MESA_DIR.
 apptainer exec --no-home \
-  --env MESA_DIR="${CONTAINER_MESA_DIR}",MESASDK_ROOT="${CONTAINER_MESASDK_ROOT}",\
-  --env LC_ALL=C,OMP_NUM_THREADS="${OMP_NUM_THREADS}" \
+  --env MESA_DIR="${CONTAINER_MESA_DIR}",MESASDK_ROOT="${CONTAINER_MESASDK_ROOT}",LC_ALL=C,OMP_NUM_THREADS="${OMP_NUM_THREADS}" \
   -B "${MESA_SRC}:${CONTAINER_MESA_DIR}",${SCRATCH_DIR} \
   "${SIF_IMAGE}" \
   bash -c "source \$MESASDK_ROOT/bin/mesasdk_init.sh; cd \$MESA_DIR; exec bash"
