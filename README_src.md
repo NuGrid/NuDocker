@@ -1,35 +1,20 @@
 [![DOI](https://zenodo.org/badge/151356323.svg)](https://zenodo.org/badge/latestdoi/151356323)
 
 # NuDocker
-
-## Table of Contents
-- [A virtual research environment for computational nuclear and stellar astrophysics](#a-virtual-research-environment-for-computational-nuclear-and-stellar-astrophysics)
-- [Motivation and goals](#motivation-and-goals)
-- [Versions](#versions)
-- [Quickstart](#quickstart)
-- [User guide](#user-guide)
-- [Visualization of results](#visualization-of-results)
-- [Docker essentials](#docker-essentials)
-- [Building the docker images](#building-the-docker-images)
-- [Running Docker images in Apptainer on Clusters](#running-docker-images-in-apptainer-on-clusters)
-- [Performance](#performance)
-- [Known issues](#known-issues)
-- [Roadmap](#roadmap)
-
-## A virtual research environment for computational nuclear and stellar astrophysics <a name="a-virtual-research-environment-for-computational-nuclear-and-stellar-astrophysics"></a>
+## A virtual research environment for computational nuclear and stellar astrophysics
 
 This repository hosts a suite for containerizing and running older or newer versions of [MESA](http://mesa.sourceforge.net) in Ubuntu-based Docker containers. The Dockerfile also allows for running and testing of other NuGrid applications, such as NuPPN, in the same docker container.
 
 See also Evan Bauer's [MESA-Docker repository](https://github.com/evbauer/MESA-Docker) and the [MESA marketplace](http://www.mesastars.org).
 
-## Motivation and goals <a name="motivation-and-goals"></a>
+## Motivation and goals
 MESA stellar evolution simulations are the basis of many of the NuGrid collaboration activitities. The motivation behind the capability of running MESA in Docker containers is primarily one of **reproducibility of science**. MESA is a _big_ code with lots of modules and dependencies that all have to play perfectly together. Rich Townsend's [MESA SDK](http://www.astro.wisc.edu/~townsend/static.php?ref=mesasdk) has significantly taken the pain out of compiling MESA. Nevertheless, it is still difficult to maintain on one actual computer the capability to run different versions of MESAS, especially going back to the older versions. At the same time, a lot of important results have been obtained with these older revisions which in many cases are not obsolete, but just different MESA flavours. 
 
 The docker technology provides _containers_ in which a particular version of MESA can run, and to preserve the required system environment for future use. While Evan's Docker repository is geared toward uses on all operating systems this project has been tested on Mac OS and Linux host systems only. However, we do provide the Dockerfiles that are the bases for building the Docker images, and we do provide the images of course as well on the Docker hub repository. The goal of this repository is rather to provide Docker images that allow to run a wide range of MESA versions, at this point as far back as version 4942. Other combinations of Linux OS and MESA SDK can also be easily generated from the Dockerfiles.
 
 Going back further than 4942 is possible in principle, but we are getting to the time before MESA SDK, and maybe even when the intel fortran compiler was the prefered option. For the time being this project does not support earlier versions. However, using the provided Dockerfiles is a good starting point for the ambitious MESA engineer to push back further into the history of MESA revisions.  Any success in that direction should trigger a pull request in this repo. 
 
-## Versions <a name="versions"></a>
+## Versions
 There are three versions of the _nudome:yy.v_ image  to run MESA. The major version number yy indicates the year from which the MESA SDK has been taken. The minor version number v may indicates updates or variations. The following mesa versions have been tested in the _nudome_ Docker image:
 
 NuDome version | MesaSDK version | MESA versions
@@ -43,7 +28,7 @@ NuDome version | MesaSDK version | MESA versions
 
 In each case the test consisted of compiling and running `test_suite/7M_prems_to_AGB`. It is likely that other versions will run as well in containers from these images.
 
-## Quickstart <a name="quickstart"></a>
+## Quickstart
 
 Six quick steps to success (more details provided below):
 1. Download and install docker
@@ -58,7 +43,7 @@ Six quick steps to success (more details provided below):
 % ./install
 ```
 
-## User guide <a name="user-guide"></a>
+## User guide
 
 ### Prerequisites
 1. Install Docker on the host OS. Test the installation. Usually that means that receiving some encouraging success message when entering the command `docker run hello-world` at the terminal.
@@ -124,7 +109,7 @@ does the same as above, but in addition it mounts `/scratch/data17` in the conta
 
 The `container_name` has been specified during the initial start of the container, and is also the hostname. It is listed in the column `NAMES` of the command `docker ps -a` (see below).
 
-## Visualization of results <a name="visualization-of-results"></a>
+## Visualization of results 
 
 At this point the nudome image does not provide any tools that may be used for plotting. This would be done on the host system through the many available tools available e.g. from
 the [MESA marketplace](http://mesastar.org). One such tool is
@@ -140,7 +125,7 @@ NuDocker has not been tested to work with pgplot. However, it could probably be 
 - https://github.com/mviereck/x11docker
 
 
-## Docker essentials <a name="docker-essentials"></a>
+## Docker essentials
 
 Docker containers are actually doing things, and they are launched by
 activating a Docker image. Containers are instances of images. The
@@ -157,7 +142,7 @@ Docker command | explanation
 `docker rm container_name` | remove container with name `container_name`
 
 
-## Building the docker images <a name="building-the-docker-images"></a>
+## Building the docker images
 
 If you want to try different combinations of Ubuntu and MESA SDK
 versions, or would like to add additional software to the nudome
@@ -178,7 +163,7 @@ make nudome14
 ```
 will build the `nudome:14.0` Docker image. The makefile target names of version `16.0` and `18.0` are `nudome16` and `nudome18` respectively. A template target `nudomexx` is provided for new builds with different version combinations and/or other modifications. 
 
-## Running Docker images in Apptainer on Clusters <a name="running-docker-images-in-apptainer-on-clusters"></a>
+## Running Docker images in Apptainer on Clusters
 The easiest way to run MESA on a cluster is to use NuDocker Docker image via the Apptainer system. Apptainer allows you to create Apptainer images from Docker images and run these as Apptainer containers on a cluster without having to install Docker on the cluster. The Apptainer system is available, for example, on the Canadian DRAC clusters and on Frontera at TACC.
 
 Here are the instructions to run the NuDocker image on the DRAC clusters with the Apptainer system:
@@ -196,7 +181,7 @@ This script sets up and launches an Apptainer container for running MESA with th
 When executed, it mounts the MESA source directory to /home/user/mesa inside the container and ensures the scratch directory is accessible at the same path. It sets necessary environment variables, including MESA_DIR and MESASDK_ROOT, OMP_NUM_THREADS. Inside the container, it sources the MESA SDK initialization script, changes the working directory to the MESA source directory, and opens an interactive shell for the user.
 
 
-## Performance <a name="performance"></a>
+## Performance
 At some point tests were made to run a recent (`r22.xxx`) version MESA natively on Mac Intel and in NuDocker and it was found that that latter is 5-10 % faster. 
 
 Below are a few additional performance numbers:
@@ -225,12 +210,12 @@ The new Apple machines use the M1/M2 processors dubbed _Apple silicon_. These ar
 Unfortunately there is apparently no straight-forward way to get decent performance with Docker images on Apple silicon. If someone knows how to do this please get in touch. Trying to build a Docker images on Apple silicon using a Dockerfile that have built Intel images using Intel Mesa SDK will not work. In principle, it is possible to build Docker images for multiple platforms, but it gets a bit complicated and it is not clear that the performance will be better, maybe it will. 
 
 
-## Known issues <a name="known-issues"></a>
+## Known issues
 * Most testing has been done on Mac OSX hosts (OSX 10.13.6, Docker version 18.06.1-ce-mac73).
 * On Linux host system, possibly depending on the setup of your docker installation, you may have to set the permissions on the mounted host directories (including the mesa host dir) to `world`, such as `chmod -R ugo+rwX mesa-rnnnn`. 
 * On Linux host system, possibly depending on the setup of your docker installation, files written as the user in the Docker container may have a user and group ID different than the one the user has on the host system. 
 
 
-## Roadmap <a name="roadmap"></a>
+## Roadmap
 * Add capability to run PPN.
 * Add jupyter notebook server that can be accessed from host to integrate analysis tools in the form of notebooks.
