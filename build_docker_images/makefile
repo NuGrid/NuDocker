@@ -16,6 +16,14 @@ nudome18 : ZENODO = 2603170
 nudome18 : TEMPLATE  = Dockerfile_template
 nudome18 : nudome
 
+# building the MPPNP version (based on nudome18 with additional packages)
+numppnp : LINUXVERS = 18.04
+numppnp : IMAGENAME = nugrid/nudome:mppnp
+numppnp : MESAVERS  = 20180822
+numppnp : ZENODO = 2603170
+numppnp : TEMPLATE  = Dockerfile_template_mppnp
+numppnp : nudome
+
 # building the 2016 version
 nudome16 : LINUXVERS = 16.04
 nudome16 : IMAGENAME = nugrid/nudome:16.0
