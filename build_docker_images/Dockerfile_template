@@ -16,8 +16,10 @@ RUN useradd -d /home/user -m -c "" user && \
     chown -R user:user /home/user && \
     chmod -R 775 /home/user/
 
-USER user
 COPY dot.bash_aliases /home/user/.bash_aliases
+RUN chown user:user /home/user/.bash_aliases
+
+USER user
 
 RUN (cd /tmp; wget https://zenodo.org/records/zzzzzzz/files/mesasdk-x86_64-linux-yyyymmdd.tar.gz) && \
     tar xvfz /tmp/mesasdk-x86_64-linux-yyyymmdd.tar.gz -C /home/user && \
