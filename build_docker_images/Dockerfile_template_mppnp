@@ -1,0 +1,55 @@
+# This is the MPPNP Dockerfile template for building NuDocker images with additional packages
+# Based on the default template but includes HDF5, OpenMPI, and NuSE
+
+FROM ubuntu:mm.nn
+
+LABEL maintainer="Falk Herwig <fherwig@uvic.ca>"
+
+COPY apt_packages_nudome.txt /tmp/apt_packages_nudome.txt
+
+RUN apt-get update && \
+    apt-get -y install $(cat /tmp/apt_packages_nudome.txt) && \
+    apt-get autoremove --yes && apt-get clean all && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+	
+RUN useradd -d /home/user -m -c "" user && \
+    chown -R user:user /home/user && \
+    chmod -R 775 /home/user/
+
+# Install HDF5
+RUN ([ ! -d /opt/hdf5-1.8.3 ] && (cd /tmp ; \
+     wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8/hdf5-1.8.3/src/hdf5-1.8.3.tar.gz ;\
+    tar -xzvf hdf5-1.8.3.tar.gz; cd hdf5-1.8.3 ; ./configure --prefix=/opt/hdf5-1.8.3;\
+    make ; make install; cd ..; rm -rf hdf5*))
+
+RUN echo Installed hdf5 ..........
+
+# Install OpenMPI
+RUN (cd /tmp ;  wget https://www.open-mpi.org/software/ompi/v3.0/downloads/openmpi-3.0.0.tar.gz; \
+    tar -xzvf openmpi-3.0.0.tar.gz ; cd openmpi-3.0.0;\
+    mkdir /opt/openmpi-3.0.0; ./configure --prefix=/opt/openmpi-3.0.0;\
+    make all install; cd ..; rm -rf openmpi*)
+
+RUN echo Installed openmpi ..........
+
+# Install NuSE
+RUN ([ ! -d /opt/se-1.2 ] && (cd /tmp; \
+    git clone https://github.com/NuGrid/NuSE.git ;\
+    cd NuSE/SE; \
+    ./configure --prefix=/opt/se-1.2 --with-hdf5=/opt/hdf5-1.8.3;\
+    make; make install; cd ../..; rm -rf NuSE))
+
+RUN echo Installed nuse ..........
+
+COPY dot.bash_aliases /home/user/.bash_aliases
+RUN chown user:user /home/user/.bash_aliases
+
+USER user
+
+RUN (cd /tmp; wget https://zenodo.org/records/zzzzzzz/files/mesasdk-x86_64-linux-yyyymmdd.tar.gz) && \
+    tar xvfz /tmp/mesasdk-x86_64-linux-yyyymmdd.tar.gz -C /home/user && \
+    rm -f /tmp/mesasdk-x86_64-linux-yyyymmdd.tar.gz 
+
+USER user
+ENV HOME=/home/user
+WORKDIR /home/user 
