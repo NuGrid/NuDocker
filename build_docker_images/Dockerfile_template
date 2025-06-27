@@ -3,7 +3,7 @@
 
 FROM ubuntu:mm.nn
 
-MAINTAINER Falk Herwig
+LABEL maintainer="Falk Herwig <fherwig@uvic.ca>"
 
 COPY apt_packages_nudome.txt /tmp/apt_packages_nudome.txt
 
@@ -19,10 +19,10 @@ RUN useradd -d /home/user -m -c "" user && \
 USER user
 COPY dot.bash_aliases /home/user/.bash_aliases
 
-RUN (cd /tmp; wget --user-agent=""  http://www.astro.wisc.edu/~townsend/resource/download/mesasdk/old/mesasdk-x86_64-linux-yyyymmdd.tar.gz) && \
+RUN (cd /tmp; wget https://zenodo.org/records/zzzzzzz/files/mesasdk-x86_64-linux-yyyymmdd.tar.gz) && \
     tar xvfz /tmp/mesasdk-x86_64-linux-yyyymmdd.tar.gz -C /home/user && \
     rm -f /tmp/mesasdk-x86_64-linux-yyyymmdd.tar.gz 
 
 USER user
-ENV HOME /home/user
+ENV HOME=/home/user
 WORKDIR /home/user
