@@ -16,27 +16,49 @@ RUN useradd -d /home/user -m -c "" user && \
     chown -R user:user /home/user && \
     chmod -R 775 /home/user/
 
-# Install HDF5
-RUN ([ ! -d /opt/hdf5-1.8.3 ] && (cd /tmp ; \
-     wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8/hdf5-1.8.3/src/hdf5-1.8.3.tar.gz ;\
-    tar -xzvf hdf5-1.8.3.tar.gz; cd hdf5-1.8.3 ; ./configure --prefix=/opt/hdf5-1.8.3;\
-    make ; make install; cd ..; rm -rf hdf5*))
+# Install GCC 7.3.0
+RUN (cd /tmp ; \
+    wget https://ftp.gnu.org/gnu/gcc/gcc-7.3.0/gcc-7.3.0.tar.gz ; \
+    tar -xzvf gcc-7.3.0.tar.gz; cd gcc-7.3.0 ; \
+    ./contrib/download_prerequisites ; \
+    mkdir build; cd build ; \
+    ../configure --prefix=/opt/gcc-7.3.0 --enable-languages=c,c++,fortran --disable-multilib ; \
+    make -j$(nproc) ; make install; cd ../..; rm -rf gcc*)
 
-RUN echo Installed hdf5 ..........
+RUN echo Installed gcc 7.3.0 ..........
 
-# Install OpenMPI
-RUN (cd /tmp ;  wget https://www.open-mpi.org/software/ompi/v3.0/downloads/openmpi-3.0.0.tar.gz; \
-    tar -xzvf openmpi-3.0.0.tar.gz ; cd openmpi-3.0.0;\
-    mkdir /opt/openmpi-3.0.0; ./configure --prefix=/opt/openmpi-3.0.0;\
+# Install OpenBLAS 0.2.20
+RUN (cd /tmp ; \
+    wget https://github.com/OpenMathLib/OpenBLAS/releases/download/v0.2.20/OpenBLAS-0.2.20.tar.gz ; \
+    tar -xzvf OpenBLAS-0.2.20.tar.gz; cd OpenBLAS-0.2.20 ; \
+    make CC=/opt/gcc-7.3.0/bin/gcc FC=/opt/gcc-7.3.0/bin/gfortran ; \
+    make PREFIX=/opt/openblas-0.2.20 install; cd ..; rm -rf OpenBLAS*)
+
+RUN echo Installed openblas 0.2.20 ..........
+
+# Install HDF5 1.8.20
+RUN (cd /tmp ; \
+    wget https://support.hdfgroup.org/ftp/HDF5/prev-releases/hdf5-1.8/hdf5-1.8.20/src/hdf5-1.8.20.tar.gz ; \
+    tar -xzvf hdf5-1.8.20.tar.gz; cd hdf5-1.8.20 ; \
+    ./configure --prefix=/opt/hdf5-1.8.20 --enable-fortran --enable-shared CC=/opt/gcc-7.3.0/bin/gcc FC=/opt/gcc-7.3.0/bin/gfortran F77=/opt/gcc-7.3.0/bin/gfortran ; \
+    make ; make install; cd ..; rm -rf hdf5*)
+
+RUN echo Installed hdf5 1.8.20 ..........
+
+# Install OpenMPI 3.0.1
+RUN (cd /tmp ; \
+    wget https://download.open-mpi.org/release/open-mpi/v3.0/openmpi-3.0.1.tar.gz; \
+    tar -xzvf openmpi-3.0.1.tar.gz ; cd openmpi-3.0.1; \
+    ./configure --prefix=/opt/openmpi-3.0.1 CC=/opt/gcc-7.3.0/bin/gcc CXX=/opt/gcc-7.3.0/bin/g++ FC=/opt/gcc-7.3.0/bin/gfortran ; \
     make all install; cd ..; rm -rf openmpi*)
 
-RUN echo Installed openmpi ..........
+RUN echo Installed openmpi 3.0.1 ..........
 
 # Install NuSE
 RUN ([ ! -d /opt/se-1.2 ] && (cd /tmp; \
     git clone https://github.com/NuGrid/NuSE.git ;\
     cd NuSE/SE; \
-    ./configure --prefix=/opt/se-1.2 --with-hdf5=/opt/hdf5-1.8.3;\
+    ./configure --prefix=/opt/se-1.2 --with-hdf5=/opt/hdf5-1.8.20;\
     make; make install; cd ../..; rm -rf NuSE))
 
 RUN echo Installed nuse ..........
