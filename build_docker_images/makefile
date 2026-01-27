@@ -1,5 +1,6 @@
 # make nudome images: select target and make, like this:
 # make nudome14
+# make NOCACHE=1 nudome14  # force no-cache rebuild
 
 # this is a template to create new combinations of linux and mesasdk
 nudomexx : LINUXVERS = 20.04
@@ -53,10 +54,11 @@ nudome20.1 : MESAVERS  = 21.4.1
 nudome20.1 : TEMPLATE  = Dockerfile_template.20
 nudome20.1 : nudome
 
+# Set NOCACHE=1 to force no-cache rebuild for any target
+NOCACHE ?= 0
+DOCKER_BUILD_ARGS = $(if $(filter 1,$(NOCACHE)),--no-cache,)
+
 nudome: 
 	sed -e s/mm.nn/$(LINUXVERS)/ -e  s/yyyymmdd/$(MESAVERS)/ -e "s/zzzzzzz/$(ZENODO)/" -e s/x.x.x/$(MPIVERS)/  \
         $(TEMPLATE) > Dockerfile
-	docker build  -t $(IMAGENAME) .
-
-build:
-	docker build -t "nugrid/nudome:mppnp" .
+	docker build $(DOCKER_BUILD_ARGS) -t $(IMAGENAME) .
