@@ -63,6 +63,19 @@ RUN ([ ! -d /opt/se-1.2 ] && (cd /tmp; \
 
 RUN echo Installed nuse ..........
 
+# Install Python packages
+COPY requirements_nudome.txt /tmp/requirements_nudome.txt
+RUN python3 -m pip install --upgrade pip setuptools wheel && \
+    python3 -m pip install -r /tmp/requirements_nudome.txt
+
+RUN echo Installed Python packages
+
+# Install NuGridPy on your own
+COPY NuGridPy /tmp/NuGridPy
+RUN python3 -m pip install -e /tmp/NuGridPy
+
+RUN echo Installed NuGridPy
+
 COPY dot.bash_aliases /home/user/.bash_aliases
 RUN chown user:user /home/user/.bash_aliases
 
