@@ -1,0 +1,12 @@
+# Python packages to install via pip
+h5py
+ipython
+matplotlib
+# git+ssh://git@gitlab.ppmstar.org:NuGrid/NuGridPy.git#egg=NuGridPy
+numba
+numpy
+pandas
+scipy
+seaborn
+sympy
+xlrd
