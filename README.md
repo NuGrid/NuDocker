@@ -162,7 +162,7 @@ Docker command | explanation
 If you want to try different combinations of Ubuntu and MESA SDK
 versions, or would like to add additional software to the nudome
 image build your own Docker image. In the `build_docker_images`
-directory use the `make` command to build the three _nudome_
+directory use the `make` command to build the various _nudome_
 versions. Edit the `makefile` to specify version numbers for the
 template target `nudomexx`.
 
@@ -171,12 +171,30 @@ The `make` command will insert the MESA SDK and Ubuntu version numbers into the
 packages you may want to install using Ubuntu's package manager
 `apt-get` may just be added to the `apt_packages_nudome.txt` file.
 
+### Available Build Targets
+
+**Standard Images:**
+- `make nudome14` - Ubuntu 12.04 + MESA SDK 20141212 (legacy)
+- `make nudome16` - Ubuntu 16.04 + MESA SDK 20160129  
+- `make nudome18` - Ubuntu 18.04 + MESA SDK 20180822
+- `make nudome20.031` - Ubuntu 20.04 + MESA SDK 20.3.1
+- `make nudome20.1` - Ubuntu 20.04 + MESA SDK 21.4.1
+
+**Specialized Images:**
+- `make numppnp` - Based on nudome18 + HDF5 1.8.3 + OpenMPI 3.0.0 + NuSE 1.2
+
+**Force Clean Rebuild:**
+- `make NOCACHE=1 nudome18` - Force rebuild ignoring Docker cache
+- `make NOCACHE=1 numppnp` - Force rebuild of MPPNP image
+
 ##### Example:
 
 ```
 make nudome14
 ```
 will build the `nudome:14.0` Docker image. The makefile target names of version `16.0` and `18.0` are `nudome16` and `nudome18` respectively. A template target `nudomexx` is provided for new builds with different version combinations and/or other modifications. 
+
+For detailed build instructions and troubleshooting, see the [build_docker_images/README.md](build_docker_images/README.md).
 
 ## Running Docker images in Apptainer on Clusters <a name="running-docker-images-in-apptainer-on-clusters"></a>
 The easiest way to run MESA on a cluster is to use NuDocker Docker image via the Apptainer system. Apptainer allows you to create Apptainer images from Docker images and run these as Apptainer containers on a cluster without having to install Docker on the cluster. The Apptainer system is available, for example, on the Canadian DRAC clusters and on Frontera at TACC.
