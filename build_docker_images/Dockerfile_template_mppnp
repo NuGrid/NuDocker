@@ -71,8 +71,8 @@ RUN python3 -m pip install --upgrade pip setuptools wheel && \
 RUN echo Installed Python packages
 
 # Install NuGridPy on your own
-COPY NuGridPy /tmp/NuGridPy
-RUN python3 -m pip install -e /tmp/NuGridPy
+COPY NuGridPy /opt/NuGridPy
+RUN python3 -m pip install -e /opt/NuGridPy
 
 RUN echo Installed NuGridPy
 
