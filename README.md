@@ -43,6 +43,8 @@ NuDome version | MesaSDK version | MESA versions
 
 In each case the test consisted of compiling and running `test_suite/7M_prems_to_AGB`. It is likely that other versions will run as well in containers from these images.
 
+There is also an Docker image that allows you to run master-branch nuppn. A Docker for modular2 is still under development.
+
 ## Quickstart <a name="quickstart"></a>
 
 Six quick steps to success (more details provided below):
