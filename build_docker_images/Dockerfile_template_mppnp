@@ -1,7 +1,25 @@
 # This is the MPPNP Dockerfile template for building NuDocker images with additional packages
 # Based on the default template but includes HDF5, OpenMPI, and NuSE
+#
+# This template supports two toolchain variants, selected with the VARIANT build-arg:
+#
+#   master   (default) - original pinned toolchain: gcc 7.3.0 / hdf5 1.8.20 / openmpi 3.0.1
+#       docker build -t mppnp:master .
+#
+#   modular2 - gcc 12.4.0 / hdf5 1.8.3 / openmpi 4.1.6
+#       docker build --build-arg VARIANT=modular2 -t mppnp:modular2 .
+#
+# Both variants run through the same shared setup (apt packages, user creation) and the
+# same shared finishing steps (Python packages, NuGridPy, mesasdk), only the compiled
+# toolchain versions differ.
 
-FROM ubuntu:mm.nn
+ARG UBUNTU_VERSION=mm.nn
+ARG VARIANT=master
+
+# ---------------------------------------------------------------------------
+# base: OS-level setup shared by every variant
+# ---------------------------------------------------------------------------
+FROM ubuntu:${UBUNTU_VERSION} AS base
 
 LABEL maintainer="Falk Herwig <fherwig@uvic.ca>"
 
@@ -11,57 +29,125 @@ RUN apt-get update && \
     apt-get -y install $(cat /tmp/apt_packages_nudome.txt) && \
     apt-get autoremove --yes && apt-get clean all && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-	
+
 RUN useradd -d /home/user -m -c "" user && \
     chown -R user:user /home/user && \
     chmod -R 775 /home/user/
 
-# Install GCC 7.3.0
+# ---------------------------------------------------------------------------
+# master: gcc 7.3.0 / hdf5 1.8.20 / openmpi 3.0.1 / OpenBLAS / NuSE
+# ---------------------------------------------------------------------------
+FROM base AS master
+
+ARG GCC_VERSION=7.3.0
+ARG HDF5_VERSION=1.8.20
+ARG HDF5_URL_PATH=prev-releases
+ARG OPENMPI_VERSION=3.0.1
+ARG OPENMPI_SERIES=3.0
+
+# Install GCC
 RUN (cd /tmp ; \
-    wget https://ftp.gnu.org/gnu/gcc/gcc-7.3.0/gcc-7.3.0.tar.gz ; \
-    tar -xzvf gcc-7.3.0.tar.gz; cd gcc-7.3.0 ; \
+    wget https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.gz ; \
+    tar -xzvf gcc-${GCC_VERSION}.tar.gz; cd gcc-${GCC_VERSION} ; \
     ./contrib/download_prerequisites ; \
     mkdir build; cd build ; \
-    ../configure --prefix=/opt/gcc-7.3.0 --enable-languages=c,c++,fortran --disable-multilib ; \
+    ../configure --prefix=/opt/gcc-${GCC_VERSION} --enable-languages=c,c++,fortran --disable-multilib ; \
     make -j$(nproc) ; make install; cd ../..; rm -rf gcc*)
 
-RUN echo Installed gcc 7.3.0 ..........
+RUN echo Installed gcc ${GCC_VERSION} ..........
 
 # Install OpenBLAS 0.2.20
 RUN (cd /tmp ; \
     wget https://github.com/OpenMathLib/OpenBLAS/releases/download/v0.2.20/OpenBLAS-0.2.20.tar.gz ; \
     tar -xzvf OpenBLAS-0.2.20.tar.gz; cd OpenBLAS-0.2.20 ; \
-    make CC=/opt/gcc-7.3.0/bin/gcc FC=/opt/gcc-7.3.0/bin/gfortran ; \
+    make CC=/opt/gcc-${GCC_VERSION}/bin/gcc FC=/opt/gcc-${GCC_VERSION}/bin/gfortran ; \
     make PREFIX=/opt/openblas-0.2.20 install; cd ..; rm -rf OpenBLAS*)
 
 RUN echo Installed openblas 0.2.20 ..........
 
-# Install HDF5 1.8.20
+# Install HDF5
 RUN (cd /tmp ; \
-    wget https://support.hdfgroup.org/ftp/HDF5/prev-releases/hdf5-1.8/hdf5-1.8.20/src/hdf5-1.8.20.tar.gz ; \
-    tar -xzvf hdf5-1.8.20.tar.gz; cd hdf5-1.8.20 ; \
-    ./configure --prefix=/opt/hdf5-1.8.20 --enable-fortran --enable-shared CC=/opt/gcc-7.3.0/bin/gcc FC=/opt/gcc-7.3.0/bin/gfortran F77=/opt/gcc-7.3.0/bin/gfortran ; \
+    wget https://support.hdfgroup.org/ftp/HDF5/${HDF5_URL_PATH}/hdf5-1.8/hdf5-${HDF5_VERSION}/src/hdf5-${HDF5_VERSION}.tar.gz ; \
+    tar -xzvf hdf5-${HDF5_VERSION}.tar.gz; cd hdf5-${HDF5_VERSION} ; \
+    ./configure --prefix=/opt/hdf5-${HDF5_VERSION} --enable-fortran --enable-shared CC=/opt/gcc-${GCC_VERSION}/bin/gcc FC=/opt/gcc-${GCC_VERSION}/bin/gfortran F77=/opt/gcc-${GCC_VERSION}/bin/gfortran ; \
     make ; make install; cd ..; rm -rf hdf5*)
 
-RUN echo Installed hdf5 1.8.20 ..........
+RUN echo Installed hdf5 ${HDF5_VERSION} ..........
 
-# Install OpenMPI 3.0.1
+# Install OpenMPI
 RUN (cd /tmp ; \
-    wget https://download.open-mpi.org/release/open-mpi/v3.0/openmpi-3.0.1.tar.gz; \
-    tar -xzvf openmpi-3.0.1.tar.gz ; cd openmpi-3.0.1; \
-    ./configure --prefix=/opt/openmpi-3.0.1 CC=/opt/gcc-7.3.0/bin/gcc CXX=/opt/gcc-7.3.0/bin/g++ FC=/opt/gcc-7.3.0/bin/gfortran ; \
+    wget https://download.open-mpi.org/release/open-mpi/v${OPENMPI_SERIES}/openmpi-${OPENMPI_VERSION}.tar.gz; \
+    tar -xzvf openmpi-${OPENMPI_VERSION}.tar.gz ; cd openmpi-${OPENMPI_VERSION}; \
+    ./configure --prefix=/opt/openmpi-${OPENMPI_VERSION} CC=/opt/gcc-${GCC_VERSION}/bin/gcc CXX=/opt/gcc-${GCC_VERSION}/bin/g++ FC=/opt/gcc-${GCC_VERSION}/bin/gfortran ; \
     make all install; cd ..; rm -rf openmpi*)
 
-RUN echo Installed openmpi 3.0.1 ..........
+RUN echo Installed openmpi ${OPENMPI_VERSION} ..........
 
 # Install NuSE
 RUN ([ ! -d /opt/se-1.2 ] && (cd /tmp; \
     git clone https://github.com/NuGrid/NuSE.git ;\
     cd NuSE/SE; \
-    ./configure --prefix=/opt/se-1.2 --with-hdf5=/opt/hdf5-1.8.20;\
+    ./configure --prefix=/opt/se-1.2 --with-hdf5=/opt/hdf5-${HDF5_VERSION};\
     make; make install; cd ../..; rm -rf NuSE))
 
 RUN echo Installed nuse ..........
+
+# Toolchain environment for the master variant. Set here (not in .bash_aliases)
+# so every process in the container gets the right compiler/MPI/libs, and so the
+# value tracks the version ARGs above. Inherited by the shared `toolchain` stage.
+ENV PATH=/opt/gcc-${GCC_VERSION}/bin:/opt/openmpi-${OPENMPI_VERSION}/bin:$PATH
+ENV LD_LIBRARY_PATH=/opt/gcc-${GCC_VERSION}/lib64:/opt/openblas-0.2.20/lib:/opt/hdf5-${HDF5_VERSION}/lib:/opt/openmpi-${OPENMPI_VERSION}/lib
+
+# ----------------------------------------------------------------------------------------------
+# modular2: gcc 12.4.0 / hdf5 1.8.3 / openmpi 4.1.6 / No need to self-install OpenBLAS and NuSE
+# ----------------------------------------------------------------------------------------------
+FROM base AS modular2
+
+ARG GCC_VERSION=12.4.0
+ARG HDF5_VERSION=1.8.3
+ARG HDF5_URL_PATH=releases
+ARG OPENMPI_VERSION=4.1.6
+ARG OPENMPI_SERIES=4.1
+
+# Install GCC
+RUN (cd /tmp ; \
+    wget https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.gz ; \
+    tar -xzvf gcc-${GCC_VERSION}.tar.gz; cd gcc-${GCC_VERSION} ; \
+    ./contrib/download_prerequisites ; \
+    mkdir build; cd build ; \
+    ../configure --prefix=/opt/gcc-${GCC_VERSION} --enable-languages=c,c++,fortran --disable-multilib ; \
+    make -j$(nproc) ; make install; cd ../..; rm -rf gcc*)
+
+RUN echo Installed gcc ${GCC_VERSION} ..........
+
+# Install HDF5
+RUN (cd /tmp ; \
+    wget https://support.hdfgroup.org/ftp/HDF5/${HDF5_URL_PATH}/hdf5-1.8/hdf5-${HDF5_VERSION}/src/hdf5-${HDF5_VERSION}.tar.gz ; \
+    tar -xzvf hdf5-${HDF5_VERSION}.tar.gz; cd hdf5-${HDF5_VERSION} ; \
+    ./configure --prefix=/opt/hdf5-${HDF5_VERSION} --enable-fortran --enable-shared CC=/opt/gcc-${GCC_VERSION}/bin/gcc FC=/opt/gcc-${GCC_VERSION}/bin/gfortran F77=/opt/gcc-${GCC_VERSION}/bin/gfortran ; \
+    make ; make install; cd ..; rm -rf hdf5*)
+
+RUN echo Installed hdf5 ${HDF5_VERSION} ..........
+
+# Install OpenMPI
+RUN (cd /tmp ; \
+    wget https://download.open-mpi.org/release/open-mpi/v${OPENMPI_SERIES}/openmpi-${OPENMPI_VERSION}.tar.gz; \
+    tar -xzvf openmpi-${OPENMPI_VERSION}.tar.gz ; cd openmpi-${OPENMPI_VERSION}; \
+    ./configure --prefix=/opt/openmpi-${OPENMPI_VERSION} CC=/opt/gcc-${GCC_VERSION}/bin/gcc CXX=/opt/gcc-${GCC_VERSION}/bin/g++ FC=/opt/gcc-${GCC_VERSION}/bin/gfortran ; \
+    make all install; cd ..; rm -rf openmpi*)
+
+RUN echo Installed openmpi ${OPENMPI_VERSION} ..........
+
+# Toolchain environment for the modular2 variant. modular2 links system BLAS
+# (apt libopenblas-dev) and builds its own hdf5/NuSE/SuperLU into the nuppn
+# tree at compile time, so only compiler + MPI need to be on PATH here.
+ENV PATH=/opt/gcc-${GCC_VERSION}/bin:/opt/openmpi-${OPENMPI_VERSION}/bin:$PATH
+ENV LD_LIBRARY_PATH=/opt/gcc-${GCC_VERSION}/lib64:/opt/hdf5-${HDF5_VERSION}/lib:/opt/openmpi-${OPENMPI_VERSION}/lib
+
+# ---------------------------------------------------------------------------
+# toolchain: picks master or modular2 as the base, via the VARIANT build-arg
+# ---------------------------------------------------------------------------
+FROM ${VARIANT} AS toolchain
 
 # Install Python packages
 COPY requirements_nudome.txt /tmp/requirements_nudome.txt
@@ -81,10 +167,6 @@ RUN chown user:user /home/user/.bash_aliases
 
 USER user
 
-RUN (cd /tmp; wget https://zenodo.org/records/zzzzzzz/files/mesasdk-x86_64-linux-yyyymmdd.tar.gz) && \
-    tar xvfz /tmp/mesasdk-x86_64-linux-yyyymmdd.tar.gz -C /home/user && \
-    rm -f /tmp/mesasdk-x86_64-linux-yyyymmdd.tar.gz 
-
 USER user
 ENV HOME=/home/user
-WORKDIR /home/user 
+WORKDIR /home/user
