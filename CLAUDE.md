@@ -75,18 +75,39 @@ The naming conventions changed between branches — do not assume symmetry.
   `PPN = /vast/home/swj/nuppn_2025`. **Must edit `PPN`** to the nuppn repo root
   inside the container. No ARCH file needed (compiler flags are inline in
   `source/Makefile`; the `ARCH/$(ARCH)/Makefile` include is optional `-include`).
+- **gfortran>=10 needs `-fallow-argument-mismatch`.** The modular2 image uses
+  gcc-12.4.0; gfortran-12 promotes MPI argument rank/type mismatches (the many
+  `mpi_send`/`mpi_pack` calls in `mppnp.F90` that pass different-typed buffers
+  through one interface) from warnings to **hard errors** → `mppnp.o` fails to
+  compile. FIX: add `FFLAGS := -fallow-argument-mismatch -fallow-invalid-boz` to
+  `source/Make.local`. It works there because `source/Makefile` does `-include
+  Make.local` at the very top and only ever does `FFLAGS += …` afterward, so a
+  seed value survives (and is `export`ed to the sub-makes). This edit currently
+  lives only in the host clone, not upstream — see CHECKLIST open questions.
 - **Self-contained deps:** `source/Makefile` downloads + builds its OWN
   HDF5 1.8.3, NuSE/SE, and SuperLU into `$(PPN)/external/` at compile time, and
   links system `-lblas` (provided by apt `libopenblas-dev`). It does NOT use the
   image's `/opt/hdf5` or `/opt/se`. So the modular2 image mainly needs the right
-  compiler + MPI + `cmake` + `libblas` + `wget`.
+  compiler + MPI + a **new-enough cmake** + `libblas` + `wget`.
+- **SuperLU needs cmake >= 3.12** but Ubuntu 18.04's apt cmake is 3.10.2 → the
+  SuperLU cmake configure aborts ("CMake 3.12 or higher is required"). The
+  modular2 stage installs a Kitware CMake 3.28 binary to `/opt/cmake` (first on
+  PATH). apt `cmake` is now redundant for modular2 but harmless.
 - **Submodules required:** `external/NuSE` (github NuGrid/NuSE) and
   `external/SuperLU` (github swjones/superlu) are git submodules the SE/SuperLU
   build rules `cd` into — an un-recursed clone leaves them empty and the build
   fails. `git submodule update --init external/NuSE external/SuperLU` (NuGridPy
   submodule not needed to compile). hdf5-1.8.3 is wget'd by the Makefile, not a
   submodule.
-- Build: inside container, `cd frames/mppnp/run_template && make`.
+- Build: inside container, `cd frames/mppnp/run_template && make`. Output binary is
+  **`mppnp.exe`**, copied into `run_template/`.
+- **Dual libgfortran (link warning, latent runtime hazard):** the resulting
+  `mppnp.exe` loads `libgfortran.so.5` (our gcc-12.4.0 code) AND `libgfortran.so.4`
+  (pulled transitively by apt `libopenblas.so.0`/`libblas.so.3`, built with 18.04's
+  gfortran-7). `ld` warns "may conflict"; it links & resolves anyway. Clean fix if
+  it ever misbehaves: build OpenBLAS from source with gcc-12.4.0 in the modular2
+  stage (as the master stage does) or move to a newer base with a gfortran-12 apt
+  BLAS. master avoids this entirely (its whole toolchain is gcc-7.3.0 → .so.4).
 
 ## Known image gaps / gotchas (fix these)
 
@@ -101,6 +122,8 @@ The naming conventions changed between branches — do not assume symmetry.
    `ENV LD_LIBRARY_PATH` (which the shared `toolchain` stage inherits), and
    `dot.bash_aliases` is being made variant-neutral so it no longer overrides
    them. It also blindly `source`d the (now-removed) mesasdk init — guard that.
+   **Placement matters:** these ENV lines must come RIGHT AFTER the gcc install
+   (before hdf5/openmpi), see gotcha #5.
 3. **`mesasdk` install was removed** from `Dockerfile_template_mppnp` (still
    present in the older single-stage `Dockerfile`/`.bak`). Fine for mppnp (it
    uses the self-built gcc toolchain, not mesasdk) but note the makefile still
@@ -109,6 +132,21 @@ The naming conventions changed between branches — do not assume symmetry.
 4. **Two OpenMPI installs coexist**: apt `openmpi-bin` (`/usr/bin/mpif90`) and the
    source-built `/opt/openmpi-*`. Whichever is first on `PATH` wins — keep the
    /opt one first for master; ensure the correct one for modular2.
+5. **modular2 OpenMPI built empty — `ENV LD_LIBRARY_PATH` was set too late.**
+   OpenMPI's `./configure` runs a Fortran test *executable*; gcc-12.4.0 links it
+   against `libgfortran.so.5`, which is NOT on the system linker path (the base
+   only has apt gfortran-7's `.so.4`). When the `ENV LD_LIBRARY_PATH` (with
+   `/opt/gcc-*/lib64`) was placed AFTER the openmpi step, configure failed with
+   "Could not run a simple Fortran program", and because the RUN chain ended in
+   `rm -rf openmpi*` (exit 0) the failure was **silently masked** — the image
+   built fine but had no `/opt/openmpi-4.1.6`, leaving apt's openmpi-2.1.1 as the
+   only MPI. master escaped this only because gcc-7.3.0's `libgfortran.so.4`
+   matches the system's. FIX (on `nuppn-dev`): moved the toolchain ENV to right
+   after the gcc install in BOTH stages, joined openmpi `./configure && make all
+   install`, and added `RUN test -x /opt/openmpi-*/bin/mpif90` as a fail-loud
+   guard. Lesson: when a self-built gcc's runtime libs aren't on the default
+   path, set `LD_LIBRARY_PATH` before anything that *runs* compiled test programs,
+   and never end a build RUN with a command (like `rm`) that can't fail.
 
 ## Running a container to compile (pattern)
 

@@ -56,6 +56,17 @@ RUN (cd /tmp ; \
 
 RUN echo Installed gcc ${GCC_VERSION} ..........
 
+# Toolchain environment for the master variant. Set here (not in .bash_aliases)
+# so every process in the container gets the right compiler/MPI/libs, and so the
+# value tracks the version ARGs above. Placed BEFORE the hdf5/openmpi builds so
+# their ./configure Fortran tests can find libgfortran from /opt/gcc (referencing
+# the not-yet-built /opt/openmpi lib dir here is harmless). Inherited by the
+# shared `toolchain` stage. (master's gcc-7.3.0 libgfortran.so.4 happens to match
+# the system apt gfortran-7, so master built even before this was moved up, but
+# keeping it early is correct and mirrors modular2.)
+ENV PATH=/opt/gcc-${GCC_VERSION}/bin:/opt/openmpi-${OPENMPI_VERSION}/bin:$PATH
+ENV LD_LIBRARY_PATH=/opt/gcc-${GCC_VERSION}/lib64:/opt/openblas-0.2.20/lib:/opt/hdf5-${HDF5_VERSION}/lib:/opt/openmpi-${OPENMPI_VERSION}/lib
+
 # Install OpenBLAS 0.2.20
 RUN (cd /tmp ; \
     wget https://github.com/OpenMathLib/OpenBLAS/releases/download/v0.2.20/OpenBLAS-0.2.20.tar.gz ; \
@@ -92,11 +103,7 @@ RUN ([ ! -d /opt/se-1.2 ] && (cd /tmp; \
 
 RUN echo Installed nuse ..........
 
-# Toolchain environment for the master variant. Set here (not in .bash_aliases)
-# so every process in the container gets the right compiler/MPI/libs, and so the
-# value tracks the version ARGs above. Inherited by the shared `toolchain` stage.
-ENV PATH=/opt/gcc-${GCC_VERSION}/bin:/opt/openmpi-${OPENMPI_VERSION}/bin:$PATH
-ENV LD_LIBRARY_PATH=/opt/gcc-${GCC_VERSION}/lib64:/opt/openblas-0.2.20/lib:/opt/hdf5-${HDF5_VERSION}/lib:/opt/openmpi-${OPENMPI_VERSION}/lib
+# (master toolchain ENV is set above, right after the gcc install.)
 
 # ----------------------------------------------------------------------------------------------
 # modular2: gcc 12.4.0 / hdf5 1.8.3 / openmpi 4.1.6 / No need to self-install OpenBLAS and NuSE
@@ -120,6 +127,20 @@ RUN (cd /tmp ; \
 
 RUN echo Installed gcc ${GCC_VERSION} ..........
 
+# Toolchain environment for the modular2 variant. Set BEFORE the hdf5/openmpi
+# builds: their ./configure runs a Fortran test executable that links
+# libgfortran.so.5 from the freshly built gcc-12.4.0, which is NOT on the
+# system linker path, so without this LD_LIBRARY_PATH the OpenMPI configure
+# fails ("Could not run a simple Fortran program") and — because the RUN chain
+# ends in `rm -rf` — silently leaves the image with no /opt/openmpi. Referencing
+# the not-yet-built /opt/openmpi lib dir here is harmless. modular2 links system
+# BLAS (apt libopenblas-dev) and builds its own hdf5/NuSE/SuperLU into the nuppn
+# tree at compile time, so only compiler + MPI need to be on PATH here.
+# (CMake is added at the END of this stage so it doesn't invalidate the hdf5/
+# openmpi build cache — it's only needed at nuppn-compile time, not image build.)
+ENV PATH=/opt/gcc-${GCC_VERSION}/bin:/opt/openmpi-${OPENMPI_VERSION}/bin:$PATH
+ENV LD_LIBRARY_PATH=/opt/gcc-${GCC_VERSION}/lib64:/opt/hdf5-${HDF5_VERSION}/lib:/opt/openmpi-${OPENMPI_VERSION}/lib
+
 # Install HDF5
 RUN (cd /tmp ; \
     wget https://support.hdfgroup.org/ftp/HDF5/${HDF5_URL_PATH}/hdf5-1.8/hdf5-${HDF5_VERSION}/src/hdf5-${HDF5_VERSION}.tar.gz ; \
@@ -133,16 +154,25 @@ RUN echo Installed hdf5 ${HDF5_VERSION} ..........
 RUN (cd /tmp ; \
     wget https://download.open-mpi.org/release/open-mpi/v${OPENMPI_SERIES}/openmpi-${OPENMPI_VERSION}.tar.gz; \
     tar -xzvf openmpi-${OPENMPI_VERSION}.tar.gz ; cd openmpi-${OPENMPI_VERSION}; \
-    ./configure --prefix=/opt/openmpi-${OPENMPI_VERSION} CC=/opt/gcc-${GCC_VERSION}/bin/gcc CXX=/opt/gcc-${GCC_VERSION}/bin/g++ FC=/opt/gcc-${GCC_VERSION}/bin/gfortran ; \
-    make all install; cd ..; rm -rf openmpi*)
+    ./configure --prefix=/opt/openmpi-${OPENMPI_VERSION} CC=/opt/gcc-${GCC_VERSION}/bin/gcc CXX=/opt/gcc-${GCC_VERSION}/bin/g++ FC=/opt/gcc-${GCC_VERSION}/bin/gfortran \
+      && make all install; cd ..; rm -rf openmpi*)
+RUN test -x /opt/openmpi-${OPENMPI_VERSION}/bin/mpif90   # fail loudly if the openmpi build above was skipped
 
 RUN echo Installed openmpi ${OPENMPI_VERSION} ..........
 
-# Toolchain environment for the modular2 variant. modular2 links system BLAS
-# (apt libopenblas-dev) and builds its own hdf5/NuSE/SuperLU into the nuppn
-# tree at compile time, so only compiler + MPI need to be on PATH here.
-ENV PATH=/opt/gcc-${GCC_VERSION}/bin:/opt/openmpi-${OPENMPI_VERSION}/bin:$PATH
-ENV LD_LIBRARY_PATH=/opt/gcc-${GCC_VERSION}/lib64:/opt/hdf5-${HDF5_VERSION}/lib:/opt/openmpi-${OPENMPI_VERSION}/lib
+# Install a modern CMake (apt's 3.10.2 on Ubuntu 18.04 is too old — modular2's
+# SuperLU CMakeLists requires >= 3.12). Official Kitware binary release, no
+# compile. Placed LAST in the stage (after the cacheable hdf5/openmpi builds)
+# and prepended to PATH so SuperLU's build sees 3.28, not apt's 3.10.2. The ARG
+# lives here (not up top) so it does not invalidate the gcc/hdf5/openmpi cache.
+ARG CMAKE_VERSION=3.28.3
+RUN (cd /tmp ; \
+    wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz ; \
+    tar -xzf cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz -C /opt ; \
+    mv /opt/cmake-${CMAKE_VERSION}-linux-x86_64 /opt/cmake ; \
+    rm -f cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz)
+RUN test -x /opt/cmake/bin/cmake   # fail loudly if the cmake install above was skipped
+ENV PATH=/opt/cmake/bin:$PATH
 
 # ---------------------------------------------------------------------------
 # toolchain: picks master or modular2 as the base, via the VARIANT build-arg
