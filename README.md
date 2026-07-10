@@ -49,7 +49,7 @@ In addition to the MESA _nudome_ images above, two **mppnp** images ship a
 self-compiled HDF5/OpenMPI(/OpenBLAS/NuSE) toolchain for compiling NuGrid's
 `nuppn`/mppnp code. They are published on Docker Hub as:
 
-Docker Hub tag | Variant | Toolchain | nuppn branch
+Docker Hub tag | Variant | Toolchain | nuppn branch tested on
 ------|--------|-----------|--------------
 `morhc/nudome:master`   | master   | gcc 7.3.0 / HDF5 1.8.20 / OpenMPI 3.0.1 / OpenBLAS 0.2.20 / NuSE | `mppnp_hif_PPM-CONSOLIDATION`
 `morhc/nudome:modular2` | modular2 | gcc 12.4.0 / HDF5 1.8.3 / OpenMPI 4.1.6 / CMake 3.28 (self-builds NuSE + SuperLU) | `modular2_swj_compilation`

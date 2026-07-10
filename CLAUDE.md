@@ -183,6 +183,71 @@ Gotchas learned while compiling (apply to both variants):
   fix this is moot, but when in doubt export PATH/LD_LIBRARY_PATH explicitly.
 - **build serially** for the master branch (`array_sizes.mod` -j race).
 
+## Building & running the MESA (nudome) images
+
+The mppnp images above are the specialized branch. The bread-and-butter of this
+repo is the **`nudome:yy.v` MESA images** (Ubuntu + a MESA SDK). This section
+captures how to build and run them, distilled from `README.md` (the user-facing
+guide, generated from `README_src.md` by `bin/generate_readme.py`) and the
+`build_docker_images/` + `bin/` scripts. It has NOT been re-verified in this
+work — treat it as a starting point and update it as MESA/Ubuntu versions move.
+
+### Templates and the makefile
+`build_docker_images/` builds every image. The MESA templates are
+`Dockerfile_template` (the default) and `Dockerfile_template.20` (the 20.x
+series); `Dockerfile_template_mppnp` is the specialized mppnp one. Each makefile
+target sets a few variables and depends on the shared `nudome:` recipe:
+
+| Target        | LINUXVERS (Ubuntu) | MESAVERS (MESA SDK) | TEMPLATE                 |
+|---------------|--------------------|---------------------|--------------------------|
+| `nudome14`    | 12.04              | 20141212            | `Dockerfile_template`    |
+| `nudome16`    | 16.04              | 20160129            | `Dockerfile_template`    |
+| `nudome18`    | 18.04              | 20180822            | `Dockerfile_template`    |
+| `nudome20.031`| 20.04              | 20.3.1              | `Dockerfile_template.20` |
+| `nudome20.1`  | 20.04              | 21.4.1              | `Dockerfile_template.20` |
+| `nudomexx`    | (template target — copy & edit for a new Ubuntu×MESA combo)     |
+
+The `nudome:` recipe just `sed`-substitutes placeholders into `Dockerfile` and
+builds it:
+```make
+sed -e s/mm.nn/$(LINUXVERS)/ -e s/yyyymmdd/$(MESAVERS)/ \
+    -e "s/zzzzzzz/$(ZENODO)/" -e s/x.x.x/$(MPIVERS)/ $(TEMPLATE) > Dockerfile
+docker build -t $(IMAGENAME) .
+```
+Placeholders: `mm.nn`→Ubuntu version, `yyyymmdd`→MESA SDK version string,
+`zzzzzzz`→the **Zenodo record id** hosting that MESA SDK tarball, `x.x.x`→MPI
+version (unused by most templates). The template's key step is:
+```dockerfile
+FROM ubuntu:mm.nn
+# ... apt install $(cat apt_packages_nudome.txt); create user; copy dot.bash_aliases
+RUN wget https://zenodo.org/records/zzzzzzz/files/mesasdk-x86_64-linux-yyyymmdd.tar.gz \
+    && tar xvfz ... -C /home/user   # unpack the MESA SDK into the image
+```
+
+### Build commands
+```bash
+cd build_docker_images
+make nudome18                 # build nugrid/nudome:18.0  (Ubuntu 18.04 + MESA SDK 20180822)
+make NOCACHE=1 nudome18       # force a clean rebuild
+```
+**To add a new MESA/Ubuntu combination:** copy the `nudomexx` target block in
+`makefile`, set `LINUXVERS`, `IMAGENAME`, `MESAVERS`, and `ZENODO` (look up the
+Zenodo record id for that MESA SDK release), pick the right `TEMPLATE`, then
+`make <yourtarget>`. Extra Ubuntu packages go in `apt_packages_nudome.txt`.
+Tested MESA/SDK combos are tabulated in `README.md` under "Versions".
+
+### Running a MESA container
+```bash
+bin/start_and_login.sh [-m /host/dir/for/runs] <container-name> <image> <path-to-mesa-source>
+# e.g. bin/start_and_login.sh mesa-r9575 nugrid/nudome:16.0 /path/MESA/mesa-r9575
+```
+It mounts the host MESA source tree at `/home/user/mesa` (and, with `-m`, another
+dir at `/home/user/mnt`), then drops you into the container. Other helpers:
+`bin/login.sh` (re-attach), `bin/stop_and_rm_all_dockers.sh` (clean up all
+containers), `bin/apptainer_mesa.sh` (run under Apptainer on clusters). The full
+user guide (prerequisites, exit/relogin, visualization, Apple-Silicon notes) is
+in `README.md`.
+
 ## Status / verification log
 
 See `CHECKLIST.md` for the live task checklist and what has been verified vs.
