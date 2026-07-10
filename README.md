@@ -43,6 +43,20 @@ NuDome version | MesaSDK version | MESA versions
 
 In each case the test consisted of compiling and running `test_suite/7M_prems_to_AGB`. It is likely that other versions will run as well in containers from these images.
 
+### MPPNP images
+
+In addition to the MESA _nudome_ images above, two **mppnp** images ship a
+self-compiled HDF5/OpenMPI(/OpenBLAS/NuSE) toolchain for compiling NuGrid's
+`nuppn`/mppnp code. They are published on Docker Hub as:
+
+Docker Hub tag | Variant | Toolchain | nuppn branch
+------|--------|-----------|--------------
+`morhc/nudome:master`   | master   | gcc 7.3.0 / HDF5 1.8.20 / OpenMPI 3.0.1 / OpenBLAS 0.2.20 / NuSE | `mppnp_hif_PPM-CONSOLIDATION`
+`morhc/nudome:modular2` | modular2 | gcc 12.4.0 / HDF5 1.8.3 / OpenMPI 4.1.6 / CMake 3.28 (self-builds NuSE + SuperLU) | `modular2_swj_compilation`
+
+See [Building the docker images](#building-the-docker-images) for how to build
+them locally (`make numppnp` / `make numppnp_modular2`).
+
 ## Quickstart <a name="quickstart"></a>
 
 Six quick steps to success (more details provided below):
@@ -180,12 +194,23 @@ packages you may want to install using Ubuntu's package manager
 - `make nudome20.031` - Ubuntu 20.04 + MESA SDK 20.3.1
 - `make nudome20.1` - Ubuntu 20.04 + MESA SDK 21.4.1
 
-**Specialized Images:**
-- `make numppnp` - Based on nudome18 + HDF5 1.8.3 + OpenMPI 3.0.0 + NuSE 1.2
+**Specialized Images (MPPNP):** two toolchain variants, built from the one
+multi-stage `Dockerfile_template_mppnp` (see [build_docker_images/README.md](build_docker_images/README.md)):
+- `make numppnp` - **master** variant → `nugrid/nudome:mppnp` (gcc 7.3.0, HDF5
+  1.8.20, OpenMPI 3.0.1, OpenBLAS 0.2.20, NuSE; nuppn branch `mppnp_hif_PPM-CONSOLIDATION`)
+- `make numppnp_modular2` - **modular2** variant → `nugrid/nudome:mppnp-modular2`
+  (gcc 12.4.0, HDF5 1.8.3, OpenMPI 4.1.6, CMake 3.28; nuppn branch `modular2_swj_compilation`)
+
+Both are published on Docker Hub (see [Versions](#versions)):
+```
+docker pull morhc/nudome:master     # master mppnp variant
+docker pull morhc/nudome:modular2   # modular2 mppnp variant
+```
 
 **Force Clean Rebuild:**
 - `make NOCACHE=1 nudome18` - Force rebuild ignoring Docker cache
-- `make NOCACHE=1 numppnp` - Force rebuild of MPPNP image
+- `make NOCACHE=1 numppnp` - Force rebuild of the master MPPNP image
+- `make NOCACHE=1 numppnp_modular2` - Force rebuild of the modular2 MPPNP image
 
 ##### Example:
 
