@@ -174,6 +174,29 @@ RUN (cd /tmp ; \
 RUN test -x /opt/cmake/bin/cmake   # fail loudly if the cmake install above was skipped
 ENV PATH=/opt/cmake/bin:$PATH
 
+# Build OpenBLAS from source with gcc-12.4.0 so the mppnp binary links a BLAS
+# whose Fortran runtime (libgfortran.so.5) MATCHES our gcc-12 code. The apt
+# libopenblas is built with 18.04's gfortran-7 (libgfortran.so.4), which would
+# otherwise get pulled in transitively and load a SECOND libgfortran alongside
+# ours -- a latent runtime hazard. DYNAMIC_ARCH=1 makes the kernels portable
+# across x86-64 host CPUs (important for a distributed image). The libblas/
+# liblapack symlinks let nuppn's hardcoded `-lblas` resolve here (nuppn's
+# nudome_mppnp Make.local adds -L/opt/openblas-*/lib so ours wins over apt's).
+# Placed after the cacheable hdf5/openmpi/cmake steps; the ENV that puts it on
+# LD_LIBRARY_PATH is appended so it doesn't invalidate those layers.
+ARG OPENBLAS_VERSION=0.3.27
+RUN (cd /tmp ; \
+    wget https://github.com/OpenMathLib/OpenBLAS/releases/download/v${OPENBLAS_VERSION}/OpenBLAS-${OPENBLAS_VERSION}.tar.gz ; \
+    tar -xzf OpenBLAS-${OPENBLAS_VERSION}.tar.gz ; cd OpenBLAS-${OPENBLAS_VERSION} ; \
+    make -j$(nproc) DYNAMIC_ARCH=1 CC=/opt/gcc-${GCC_VERSION}/bin/gcc FC=/opt/gcc-${GCC_VERSION}/bin/gfortran \
+      && make PREFIX=/opt/openblas-${OPENBLAS_VERSION} install ; \
+    cd .. ; rm -rf OpenBLAS-${OPENBLAS_VERSION}*)
+RUN cd /opt/openblas-${OPENBLAS_VERSION}/lib \
+    && ln -sf libopenblas.so libblas.so   && ln -sf libopenblas.so libblas.so.3 \
+    && ln -sf libopenblas.so liblapack.so && ln -sf libopenblas.so liblapack.so.3
+RUN test -e /opt/openblas-${OPENBLAS_VERSION}/lib/libblas.so   # fail loudly if the openblas build/symlink above was skipped
+ENV LD_LIBRARY_PATH=/opt/openblas-${OPENBLAS_VERSION}/lib:$LD_LIBRARY_PATH
+
 # ---------------------------------------------------------------------------
 # toolchain: picks master or modular2 as the base, via the VARIANT build-arg
 # ---------------------------------------------------------------------------

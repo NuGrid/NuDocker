@@ -21,7 +21,7 @@ The build is driven by `makefile`, which `sed`-substitutes a
 | Stage / variant | gcc     | HDF5   | OpenMPI | OpenBLAS | NuSE | Matches nuppn branch                |
 |-----------------|---------|--------|---------|----------|------|-------------------------------------|
 | `master`  (def) | 7.3.0   | 1.8.20 | 3.0.1   | 0.2.20 (from src) | /opt/se-1.2 | `mppnp_hif_PPM-CONSOLIDATION` |
-| `modular2`      | 12.4.0  | 1.8.3  | 4.1.6   | apt `libopenblas-dev` | — (built by nuppn) | `modular2_swj_compilation`  |
+| `modular2`      | 12.4.0  | 1.8.3  | 4.1.6   | 0.3.27 (from src, gcc-12) | — (built by nuppn) | `modular2_swj_compilation`  |
 
 Structure: `base` (apt + user) → `master` **or** `modular2` (toolchain) →
 `FROM ${VARIANT} AS toolchain` (shared Python/NuGridPy/aliases finish). With
@@ -79,16 +79,20 @@ The naming conventions changed between branches — do not assume symmetry.
   gcc-12.4.0; gfortran-12 promotes MPI argument rank/type mismatches (the many
   `mpi_send`/`mpi_pack` calls in `mppnp.F90` that pass different-typed buffers
   through one interface) from warnings to **hard errors** → `mppnp.o` fails to
-  compile. FIX: add `FFLAGS := -fallow-argument-mismatch -fallow-invalid-boz` to
-  `source/Make.local`. It works there because `source/Makefile` does `-include
-  Make.local` at the very top and only ever does `FFLAGS += …` afterward, so a
-  seed value survives (and is `export`ed to the sub-makes). This edit currently
-  lives only in the host clone, not upstream — see CHECKLIST open questions.
+  compile. FIX (branch `modular2_swj_compilation-JOSH-INTEGRATING-MASTER`): the
+  flag now lives in **`source/Makefile`**, version-guarded — it detects
+  `$(FC) -dumpversion` and appends `-fallow-argument-mismatch -fallow-invalid-boz`
+  to `OPT` only when gfortran major >= 10 (the flag does NOT exist on gfortran
+  < 10, where it would be a hard "unrecognized option" error). So every gcc-12
+  build of the branch gets it, older compilers are untouched, and the
+  nudome_mppnp template no longer needs to seed FFLAGS.
 - **Self-contained deps:** `source/Makefile` downloads + builds its OWN
-  HDF5 1.8.3, NuSE/SE, and SuperLU into `$(PPN)/external/` at compile time, and
-  links system `-lblas` (provided by apt `libopenblas-dev`). It does NOT use the
-  image's `/opt/hdf5` or `/opt/se`. So the modular2 image mainly needs the right
-  compiler + MPI + a **new-enough cmake** + `libblas` + `wget`.
+  HDF5 1.8.3, NuSE/SE, and SuperLU into `$(PPN)/external/` at compile time. It
+  does NOT use the image's `/opt/hdf5` or `/opt/se`. For BLAS it links `-lblas`,
+  which the nudome_mppnp Make.local now points at the image's source-built
+  `/opt/openblas-0.3.27` (gcc-12) instead of apt's (see dual-libgfortran fix
+  below). So the modular2 image mainly needs the right compiler + MPI + a
+  **new-enough cmake** + a **gcc-12 BLAS** + `wget`.
 - **SuperLU needs cmake >= 3.12** but Ubuntu 18.04's apt cmake is 3.10.2 → the
   SuperLU cmake configure aborts ("CMake 3.12 or higher is required"). The
   modular2 stage installs a Kitware CMake 3.28 binary to `/opt/cmake` (first on
@@ -101,13 +105,25 @@ The naming conventions changed between branches — do not assume symmetry.
   submodule.
 - Build: inside container, `cd frames/mppnp/run_template && make`. Output binary is
   **`mppnp.exe`**, copied into `run_template/`.
-- **Dual libgfortran (link warning, latent runtime hazard):** the resulting
-  `mppnp.exe` loads `libgfortran.so.5` (our gcc-12.4.0 code) AND `libgfortran.so.4`
+- **Dual libgfortran — FIXED (was a latent runtime hazard).** Originally
+  `mppnp.exe` loaded `libgfortran.so.5` (our gcc-12.4.0 code) AND `libgfortran.so.4`
   (pulled transitively by apt `libopenblas.so.0`/`libblas.so.3`, built with 18.04's
-  gfortran-7). `ld` warns "may conflict"; it links & resolves anyway. Clean fix if
-  it ever misbehaves: build OpenBLAS from source with gcc-12.4.0 in the modular2
-  stage (as the master stage does) or move to a newer base with a gfortran-12 apt
-  BLAS. master avoids this entirely (its whole toolchain is gcc-7.3.0 → .so.4).
+  gfortran-7). FIX: the modular2 stage now **builds OpenBLAS 0.3.27 from source
+  with gcc-12.4.0** (`DYNAMIC_ARCH=1` for CPU portability) into
+  `/opt/openblas-0.3.27`, with `libblas.so*`/`liblapack.so*` symlinks so nuppn's
+  hardcoded `-lblas` resolves there, and puts it first on `LD_LIBRARY_PATH`. The
+  nudome_mppnp Make.local adds `LDFLAGS += -L/opt/openblas-0.3.27/lib
+  -Wl,-rpath=…` so the link picks ours over apt's. Result: `mppnp.exe` loads a
+  SINGLE libgfortran (`.so.5`), verified by ldd. NOTE: apt `libopenblas-dev` is
+  still in `apt_packages_nudome.txt` (shared with master, which links it) but is
+  now unused by modular2. master needs no such fix — its whole toolchain is
+  gcc-7.3.0 → one `.so.4` already.
+- **The two mppnp images are fully separate.** `FROM ${VARIANT} AS toolchain`
+  means each published image contains ONLY its variant's `/opt` toolchain
+  (`docker run … ls /opt`): master has gcc-7.3.0/hdf5-1.8.20/openmpi-3.0.1/
+  openblas-0.2.20/se-1.2; modular2 has gcc-12.4.0/hdf5-1.8.3/openmpi-4.1.6/cmake/
+  openblas-0.3.27. No cross-contamination — a user pulls one tag and gets only
+  that toolchain.
 
 ## Known image gaps / gotchas (fix these)
 
