@@ -1,13 +1,14 @@
-# mesa
+# mesa (mesasdk is not installed in the mppnp image; guard the source so an
+# interactive login shell doesn't error. Harmless for images that do ship it.)
 export MESA_DIR=~/mesa
 export MESASDK_ROOT=~/mesasdk
-source $MESASDK_ROOT/bin/mesasdk_init.sh
+[ -f "$MESASDK_ROOT/bin/mesasdk_init.sh" ] && source "$MESASDK_ROOT/bin/mesasdk_init.sh"
 export OMP_NUM_THREADS=4
 
-# mppnp
-#export PATH=$PATH:/opt/openmpi-3.0.0/bin
-export PATH=/opt/gcc-7.3.0/bin:/opt/openmpi-3.0.1/bin:$PATH
-export LD_LIBRARY_PATH=/opt/gcc-7.3.0/lib64:/opt/openblas-0.2.20/lib:/opt/hdf5-1.8.20/lib:/opt/openmpi-3.0.1/lib:$LD_LIBRARY_PATH
+# mppnp: the toolchain PATH / LD_LIBRARY_PATH are set per-variant via Docker ENV
+# in Dockerfile_template_mppnp (master vs modular2). Setting them there (not here)
+# means they are correct for BOTH variants and are also available to
+# non-interactive shells/scripts. Do not hardcode a single variant's paths here.
 
 # user
 alias ed='emacs -nw'

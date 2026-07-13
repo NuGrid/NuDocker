@@ -1,5 +1,6 @@
 binutils
 bzip2
+cmake
 emacs
 gcc
 gfortran

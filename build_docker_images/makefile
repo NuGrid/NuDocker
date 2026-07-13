@@ -18,12 +18,20 @@ nudome18 : TEMPLATE  = Dockerfile_template
 nudome18 : nudome
 
 # building the MPPNP version (based on nudome18 with additional packages)
+# numppnp          -> master variant  (gcc 7.3.0 / hdf5 1.8.20 / openmpi 3.0.1)
+# numppnp_modular2 -> modular2 variant (gcc 12.4.0 / hdf5 1.8.3 / openmpi 4.1.6)
 numppnp : LINUXVERS = 18.04
 numppnp : IMAGENAME = nugrid/nudome:mppnp
 numppnp : MESAVERS  = 20180822
 numppnp : ZENODO = 2603170
 numppnp : TEMPLATE  = Dockerfile_template_mppnp
 numppnp : nudome
+
+numppnp_modular2 : LINUXVERS = 18.04
+numppnp_modular2 : IMAGENAME = nugrid/nudome:mppnp-modular2
+numppnp_modular2 : VARIANT   = modular2
+numppnp_modular2 : TEMPLATE  = Dockerfile_template_mppnp
+numppnp_modular2 : nudome
 
 # building the 2016 version
 nudome16 : LINUXVERS = 16.04
@@ -57,8 +65,10 @@ nudome20.1 : nudome
 # Set NOCACHE=1 to force no-cache rebuild for any target
 NOCACHE ?= 0
 DOCKER_BUILD_ARGS = $(if $(filter 1,$(NOCACHE)),--no-cache,)
+# Pass VARIANT through to docker only when a target sets it (mppnp targets).
+DOCKER_VARIANT_ARG = $(if $(VARIANT),--build-arg VARIANT=$(VARIANT),)
 
-nudome: 
+nudome:
 	sed -e s/mm.nn/$(LINUXVERS)/ -e  s/yyyymmdd/$(MESAVERS)/ -e "s/zzzzzzz/$(ZENODO)/" -e s/x.x.x/$(MPIVERS)/  \
         $(TEMPLATE) > Dockerfile
-	docker build $(DOCKER_BUILD_ARGS) -t $(IMAGENAME) .
+	docker build $(DOCKER_BUILD_ARGS) $(DOCKER_VARIANT_ARG) -t $(IMAGENAME) .

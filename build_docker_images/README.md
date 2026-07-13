@@ -21,8 +21,17 @@ This directory contains the build system for creating various NuDocker images wi
 - **`nudome20.031`** - Ubuntu 20.04 + MESA SDK 20.3.1
 - **`nudome20.1`** - Ubuntu 20.04 + MESA SDK 21.4.1
 
-### Specialized Images
-- **`numppnp`** - Based on nudome18 + HDF5 1.8.3 + OpenMPI 3.0.0 + NuSE 1.2
+### Specialized Images (MPPNP)
+Two mppnp toolchain variants are built from the one multi-stage
+`Dockerfile_template_mppnp`, selected by `--build-arg VARIANT=`:
+
+- **`numppnp`** (master variant) → image `nugrid/nudome:mppnp` — Ubuntu 18.04 +
+  gcc 7.3.0 + HDF5 1.8.20 + OpenMPI 3.0.1 + OpenBLAS 0.2.20 + NuSE (`/opt/se-1.2`).
+  Matches nuppn branch `mppnp_hif_PPM-CONSOLIDATION`.
+- **`numppnp_modular2`** (modular2 variant) → image `nugrid/nudome:mppnp-modular2` —
+  Ubuntu 18.04 + gcc 12.4.0 + HDF5 1.8.3 + OpenMPI 4.1.6 + CMake 3.28 + apt
+  OpenBLAS. Builds its own NuSE + SuperLU at nuppn-compile time. Matches nuppn
+  branch `modular2_swj_compilation`.
 
 ### Template Target
 - **`nudomexx`** - Template for creating new image combinations
@@ -36,6 +45,12 @@ make nudome18
 
 # Build MPPNP image with additional packages
 make numppnp
+```
+
+### Build the MPPNP images
+```bash
+make numppnp            # master variant  -> nugrid/nudome:mppnp
+make numppnp_modular2   # modular2 variant -> nugrid/nudome:mppnp-modular2
 ```
 
 ### Force No-Cache Rebuild
@@ -63,13 +78,22 @@ All standard images include:
 - Basic development tools
 - User setup with proper permissions
 
-### MPPNP Image (`numppnp`)
-The MPPNP image includes everything from `nudome18` plus:
-- **HDF5 1.8.3** - Hierarchical Data Format library
-- **OpenMPI 3.0.0** - Message Passing Interface for parallel computing  
-- **NuSE 1.2** - NuGrid Stellar Evolution package
+### MPPNP Images (`numppnp`, `numppnp_modular2`)
+Both are built on Ubuntu 18.04 with a self-compiled scientific toolchain
+installed under `/opt/`, plus Python + NuGridPy. They differ by variant:
 
-All packages are installed in `/opt/` for easy access.
+| | `numppnp` (master) | `numppnp_modular2` (modular2) |
+|---|---|---|
+| Image tag        | `nugrid/nudome:mppnp` | `nugrid/nudome:mppnp-modular2` |
+| gcc              | 7.3.0   | 12.4.0 |
+| HDF5             | 1.8.20  | 1.8.3  |
+| OpenMPI          | 3.0.1   | 4.1.6  |
+| OpenBLAS         | 0.2.20 (from source) | apt `libopenblas-dev` |
+| NuSE / SuperLU   | NuSE at `/opt/se-1.2` | built by nuppn at compile time (CMake 3.28) |
+| nuppn branch     | `mppnp_hif_PPM-CONSOLIDATION` | `modular2_swj_compilation` |
+
+See `../CLAUDE.md` for how each nuppn branch compiles and the gotchas
+(serial make for master; `-fallow-argument-mismatch` for modular2's gfortran-12).
 
 ## Troubleshooting
 
